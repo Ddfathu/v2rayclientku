@@ -26,14 +26,12 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Prepare Libs and Core Binaries
+      - name: Prepare Core Libs
         run: |
           mkdir -p V2rayNG/app/libs
-          # Unduh libv2ray.aar resmi terbaru jika belum ada
-          curl -L -o V2rayNG/app/libs/libv2ray.aar https://github.com/2dust/AndroidLibXrayLite/releases/latest/download/libv2ray.aar || true
+          if [ -d "AndroidLibXrayLite" ]; then
+            find AndroidLibXrayLite -name "*.aar" -exec cp {} V2rayNG/app/libs/ \;
+          fi
 
       - name: Grant Execute Permission for Gradlew
         working-directory: V2rayNG
