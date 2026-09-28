@@ -13,38 +13,54 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository with Submodules
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
-          submodules: recursive
-          fetch-depth: 0
+          submodules: 'recursive'
+          fetch-depth: '0'
 
-      - name: Set up JDK 17
+      - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
-          cache: 'gradle'
+          java-version: '21'
 
-      - name: Prepare Core Libs
+      - name: Install Android NDK
         run: |
-          mkdir -p V2rayNG/app/libs
-          if [ -d "AndroidLibXrayLite" ]; then
-            find AndroidLibXrayLite -name "*.aar" -exec cp {} V2rayNG/app/libs/ \;
-          fi
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            --channel=0 \
+            --install "ndk;29.0.14206865"
+          echo "NDK_HOME=$ANDROID_HOME/ndk/29.0.14206865" >> $GITHUB_ENV
+          sed -i '10i\ndkVersion = "29.0.14206865"' ${{ github.workspace }}/V2rayNG/app/build.gradle.kts || true
 
-      - name: Grant Execute Permission for Gradlew
-        working-directory: V2rayNG
-        run: chmod +x gradlew
+      - name: Compile libhevtun
+        run: |
+          chmod +x compile-hevtun.sh || true
+          bash compile-hevtun.sh
+          mkdir -p ${{ github.workspace }}/V2rayNG/app/libs
+          cp -r ${{ github.workspace }}/libs/* ${{ github.workspace }}/V2rayNG/app/libs/ 2>/dev/null || true
+
+      - name: Fetch AndroidLibXrayLite Tag & Download Core
+        run: |
+          pushd AndroidLibXrayLite
+          CURRENT_TAG=$(git describe --tags --abbrev=0)
+          popd
+          echo "Using Tag: $CURRENT_TAG"
+          mkdir -p ${{ github.workspace }}/V2rayNG/app/libs
+          curl -L -o ${{ github.workspace }}/V2rayNG/app/libs/libv2ray.aar \
+            "https://github.com/2dust/AndroidLibXrayLite/releases/download/${CURRENT_TAG}/libv2ray.aar"
 
       - name: Build Debug APK
-        working-directory: V2rayNG
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        run: |
+          cd ${{ github.workspace }}/V2rayNG
+          echo "sdk.dir=${ANDROID_HOME}" > local.properties
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: dfathuv2ray-APK
-          path: |
-            V2rayNG/app/build/outputs/apk/**/*.apk
+          path: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/debug/*.apk
           retention-days: 7
