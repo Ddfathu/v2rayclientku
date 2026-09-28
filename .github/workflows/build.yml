@@ -26,19 +26,27 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Prepare Libs and Core Binaries
+        run: |
+          mkdir -p V2rayNG/app/libs
+          # Unduh libv2ray.aar resmi terbaru jika belum ada
+          curl -L -o V2rayNG/app/libs/libv2ray.aar https://github.com/2dust/AndroidLibXrayLite/releases/latest/download/libv2ray.aar || true
+
       - name: Grant Execute Permission for Gradlew
         working-directory: V2rayNG
         run: chmod +x gradlew
 
       - name: Build Debug APK
         working-directory: V2rayNG
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: dfathuv2ray-APK
           path: |
-            V2rayNG/app/build/outputs/apk/debug/*.apk
             V2rayNG/app/build/outputs/apk/**/*.apk
           retention-days: 7
