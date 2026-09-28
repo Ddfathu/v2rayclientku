@@ -50,27 +50,17 @@ jobs:
           curl -L -o ${{ github.workspace }}/V2rayNG/app/libs/libv2ray.aar \
             "https://github.com/2dust/AndroidLibXrayLite/releases/download/${CURRENT_TAG}/libv2ray.aar"
 
-      - name: Build Debug APK with Error Logger
-        id: gradle_build
+      - name: Build Debug APK
         run: |
           cd ${{ github.workspace }}/V2rayNG
           echo "sdk.dir=${ANDROID_HOME}" > local.properties
           chmod +x gradlew
-          # Menjalankan build sambil mencatat log
-          ./gradlew assembleDebug --no-daemon 2>&1 | tee build.log
-
-      - name: Show Exact Error Message
-        if: failure()
-        run: |
-          echo "==================== RINGKASAN ERROR KODINGAN ===================="
-          # Mencari pesan error Kotlin/Java, baris yang bermasalah, dan penyebab kegagalan
-          grep -E "(e: |FAILURE: |Unresolved reference|A failure occurred)" ${{ github.workspace }}/V2rayNG/build.log || tail -n 60 ${{ github.workspace }}/V2rayNG/build.log
-          echo "================================================================="
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         if: success()
         with:
           name: dfathuv2ray-APK
-          path: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/debug/*.apk
+          path: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/**/*.apk
           retention-days: 7
