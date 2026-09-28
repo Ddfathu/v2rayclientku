@@ -27,9 +27,11 @@ jobs:
           cache: 'gradle'
 
       - name: Grant Execute Permission for Gradlew
+        working-directory: V2rayNG
         run: chmod +x gradlew
 
       - name: Build Debug APK
+        working-directory: V2rayNG
         run: ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK Artifact
@@ -37,6 +39,6 @@ jobs:
         with:
           name: dfathuv2ray-APK
           path: |
-            **/build/outputs/apk/debug/*.apk
-            **/build/outputs/apk/**/*.apk
+            V2rayNG/app/build/outputs/apk/debug/*.apk
+            V2rayNG/app/build/outputs/apk/**/*.apk
           retention-days: 7
