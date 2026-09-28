@@ -16,15 +16,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -37,7 +34,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -125,14 +121,13 @@ fun SettingsScreen(
     onSystemVpnSettingsClicked: () -> Unit
 ) {
     var currentPage by rememberSaveable { mutableStateOf(SettingsSubPage.MAIN_MENU) }
+    val scrollState = rememberScrollState()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val systemVpnSettingsAvailable by viewModel.systemVpnSettingsAvailable.collectAsStateWithLifecycle()
 
     BackHandler(enabled = currentPage != SettingsSubPage.MAIN_MENU) {
         currentPage = SettingsSubPage.MAIN_MENU
     }
-
-    val scrollState = rememberScrollState()
-    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
-    val systemVpnSettingsAvailable by viewModel.systemVpnSettingsAvailable.collectAsStateWithLifecycle()
 
     var localDns by rememberMmkvBool(AppConfig.PREF_LOCAL_DNS_ENABLED, false)
     var fakeDns by rememberMmkvBool(AppConfig.PREF_FAKE_DNS_ENABLED, false)
@@ -238,7 +233,7 @@ fun SettingsScreen(
     val modeEntries = stringArrayResource(R.array.mode_entries).toList()
     val modeValues = stringArrayResource(R.array.mode_value).toList()
 
-    val screenTitle = when (currentPage) {
+    val currentTitle = when (currentPage) {
         SettingsSubPage.MAIN_MENU -> stringResource(R.string.title_settings)
         SettingsSubPage.UI_PAGE -> stringResource(R.string.title_ui_settings)
         SettingsSubPage.VPN_PAGE -> stringResource(R.string.title_vpn_settings)
@@ -250,10 +245,13 @@ fun SettingsScreen(
         contentWindowInsets = WindowInsets(0),
         topBar = {
             AppTopBar(
-                title = screenTitle,
+                title = currentTitle,
                 onBackClick = {
-                    if (currentPage == SettingsSubPage.MAIN_MENU) onBackClick()
-                    else currentPage = SettingsSubPage.MAIN_MENU
+                    if (currentPage == SettingsSubPage.MAIN_MENU) {
+                        onBackClick()
+                    } else {
+                        currentPage = SettingsSubPage.MAIN_MENU
+                    }
                 },
                 isLoading = isLoading
             )
@@ -268,29 +266,28 @@ fun SettingsScreen(
         ) {
             when (currentPage) {
                 SettingsSubPage.MAIN_MENU -> {
-                    Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
-                        SettingsHubCard(
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        SettingsCategoryCard(
                             title = stringResource(R.string.title_ui_settings),
                             subtitle = "Tema, mode malam, bahasa, dan tata letak",
-                            iconRes = R.drawable.ic_settings_theme_24dp,
                             onClick = { currentPage = SettingsSubPage.UI_PAGE }
                         )
-                        SettingsHubCard(
+                        Spacer(modifier = Modifier.height(10.dp))
+                        SettingsCategoryCard(
                             title = stringResource(R.string.title_vpn_settings),
                             subtitle = "DNS, MTU, IPv6, dan konfigurasi TUN VPN",
-                            iconRes = R.drawable.ic_settings_vpn_24dp,
                             onClick = { currentPage = SettingsSubPage.VPN_PAGE }
                         )
-                        SettingsHubCard(
+                        Spacer(modifier = Modifier.height(10.dp))
+                        SettingsCategoryCard(
                             title = stringResource(R.string.title_core_settings),
-                            subtitle = "Sniffing, Mux tunnel, Fragment, dan Local proxy",
-                            iconRes = R.drawable.ic_settings_core_24dp,
+                            subtitle = "Sniffing, Mux tunnel, Fragment, dan Observatory",
                             onClick = { currentPage = SettingsSubPage.CORE_PAGE }
                         )
-                        SettingsHubCard(
+                        Spacer(modifier = Modifier.height(10.dp))
+                        SettingsCategoryCard(
                             title = stringResource(R.string.title_advanced),
-                            subtitle = "Root mode, start on boot, URL delay test, dan mode koneksi",
-                            iconRes = R.drawable.ic_settings_advanced_24dp,
+                            subtitle = "Root mode, start on boot, URL test, dan mode koneksi",
                             onClick = { currentPage = SettingsSubPage.ADVANCED_PAGE }
                         )
                     }
@@ -473,7 +470,7 @@ fun SettingsScreen(
                             if (!localProxyForced) {
                                 enableLocalProxy = it
                                 if (!it && appendHttpProxy) {
-                                appendHttpProxy = false
+                                    appendHttpProxy = false
                                 }
                             }
                         }
@@ -548,6 +545,7 @@ fun SettingsScreen(
                         selectedValue = outboundResolveMethod,
                         onSelected = { outboundResolveMethod = it }
                     )
+
                     SettingsSwitchItem(
                         title = stringResource(R.string.title_pref_mux_enabled),
                         summary = stringResource(R.string.summary_pref_mux_enabled),
@@ -576,6 +574,7 @@ fun SettingsScreen(
                         enabled = mux && muxXudpConcurrencyInt >= 0,
                         onSelected = { muxXudpQuic = it }
                     )
+
                     SettingsSwitchItem(
                         title = stringResource(R.string.title_pref_fragment_enabled),
                         checked = fragment,
@@ -608,6 +607,7 @@ fun SettingsScreen(
                         keyboardNumber = true,
                         onValueChanged = { fragmentMaxSplit = it }
                     )
+
                     SettingsEditItem(
                         title = stringResource(R.string.title_pref_observatory_least_ping_interval),
                         value = observatoryLeastPingInterval,
@@ -684,6 +684,7 @@ fun SettingsScreen(
                         value = ipApiUrl,
                         onValueChanged = { ipApiUrl = it }
                     )
+
                     SettingsListItem(
                         title = stringResource(R.string.title_mode),
                         entries = modeEntries,
@@ -733,16 +734,14 @@ fun SettingsScreen(
 }
 
 @Composable
-fun SettingsHubCard(
+fun SettingsCategoryCard(
     title: String,
     subtitle: String,
-    iconRes: Int,
     onClick: () -> Unit
 ) {
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
@@ -756,30 +755,23 @@ fun SettingsHubCard(
                 .padding(horizontal = 16.dp, vertical = 18.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                painter = painterResource(id = iconRes),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(28.dp)
-            )
-            Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
                 )
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Icon(
-                painter = painterResource(id = R.drawable.ic_keyboard_arrow_right_24dp),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(22.dp)
+            Text(
+                text = "➔",
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
             )
         }
     }
