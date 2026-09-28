@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Palet Warna: Ungu, Merah & Silver -->
     <color name="theme_purple">#7B1FA2</color>
@@ -19,11 +20,10 @@
         <item name="android:windowLightNavigationBar">true</item>
         <item name="android:windowBackground">@color/window_background_light</item>
 
-        <!-- Material / AppCompat Color Scheme -->
+        <!-- AppCompat Color Scheme yang Sah -->
         <item name="colorPrimary">@color/theme_purple</item>
         <item name="colorPrimaryDark">@color/theme_purple_dark</item>
         <item name="colorAccent">@color/theme_red_accent</item>
-        <item name="colorSecondary">@color/theme_red_accent</item>
     </style>
 
     <style name="AppThemeDayNight" parent="AppThemeBase" />
