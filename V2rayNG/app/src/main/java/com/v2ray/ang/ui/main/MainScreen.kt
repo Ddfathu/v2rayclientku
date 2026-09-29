@@ -43,13 +43,13 @@ import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-// Palet Kontras Jelas & Terang
-private val DarkBackground = Color(0xFF120C1F) // Ungu gelap pekat
-private val DarkBarSurface = Color(0xFF1F1433) // Bilah navigasi bawah terang berkelas
-private val ActiveNeonPink = Color(0xFFFF2A85) // Pink neon menyala
-private val ActivePillBg   = Color(0x33FF2A85) // Sorotan kapsul aktif
-private val InactiveIcon   = Color(0xFFD1C4E9) // Ungu muda sangat terang (jelas terlihat)
-private val TextWhiteColor = Color(0xFFFFFFFF) // Putih solid
+// PALET ELEGAN SOFT PINK / PUTIH BERSIH
+private val SoftBackground  = Color(0xFFFBF4F8) // Pink sangat lembut bersih (tidak hitam lagi)
+private val TopBarPurple    = Color(0xFF4A148C) // Ungu elegan di toolbar atas
+private val BarSurfaceColor = Color(0xFFFFFFFF) // Bottom bar putih bersih
+private val ActiveColor     = Color(0xFFD81B60) // Pink tua aktif
+private val InactiveColor   = Color(0xFF757575) // Abu-abu bersih
+private val PillActiveBg    = Color(0x22D81B60) // Kapsul sorotan lembut
 
 @Composable
 fun MainScreen(
@@ -172,10 +172,10 @@ fun MainScreen(
         }
     ) {
         Scaffold(
-            containerColor = DarkBackground,
+            containerColor = SoftBackground,
             contentWindowInsets = ScaffoldDefaults.contentWindowInsets,
             topBar = {
-                Column(modifier = Modifier.background(DarkBackground)) {
+                Column(modifier = Modifier.background(TopBarPurple)) {
                     MainTopBar(
                         isLoading = isLoading,
                         showSearch = showSearch,
@@ -208,17 +208,18 @@ fun MainScreen(
                         }
                     )
 
+                    // Sub Tabs Grup Kategori
                     if (groups.isNotEmpty() && currentBottomNav == 0) {
                         ScrollableTabRow(
                             selectedTabIndex = pagerState.currentPage.coerceIn(0, groups.lastIndex),
-                            containerColor = DarkBackground,
-                            contentColor = ActiveNeonPink,
+                            containerColor = TopBarPurple,
+                            contentColor = Color.White,
                             edgePadding = 16.dp,
                             indicator = { tabPositions ->
                                 val activeIdx = pagerState.currentPage.coerceIn(0, groups.lastIndex)
                                 TabRowDefaults.SecondaryIndicator(
                                     modifier = Modifier.tabIndicatorOffset(tabPositions[activeIdx]),
-                                    color = ActiveNeonPink,
+                                    color = Color(0xFFFF4081),
                                     height = 3.dp
                                 )
                             }
@@ -235,8 +236,8 @@ fun MainScreen(
                                     text = {
                                         Text(
                                             text = group.remarks.ifEmpty { "Default" },
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                            color = if (isSelected) TextWhiteColor else InactiveIcon,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (isSelected) Color.White else Color(0xFFD1C4E9),
                                             fontSize = 14.sp
                                         )
                                     }
@@ -261,7 +262,7 @@ fun MainScreen(
                         expanded = showImportDropdown,
                         onDismissRequest = { showImportDropdown = false },
                         scrollState = importScrollState,
-                        containerColor = DarkBarSurface,
+                        containerColor = Color.White,
                         modifier = Modifier
                             .heightIn(max = maxMenuHeight)
                             .verticalScrollbar(importScrollState)
@@ -326,8 +327,8 @@ private fun ModernBottomBar(
     onOpenSettings: () -> Unit
 ) {
     Surface(
-        color = DarkBarSurface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF332050)),
+        color = BarSurfaceColor,
+        shadowElevation = 8.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)) {
@@ -346,7 +347,7 @@ private fun ModernBottomBar(
                     onClick = { onTabSelected(0) }
                 )
 
-                // 2. Tambah / Import
+                // 2. Tambah
                 BottomNavItem(
                     iconRes = R.drawable.ic_add_24dp,
                     label = "Tambah",
@@ -418,14 +419,14 @@ private fun BottomNavItem(
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(16.dp))
-                .background(if (isSelected) ActivePillBg else Color.Transparent)
+                .background(if (isSelected) PillActiveBg else Color.Transparent)
                 .padding(horizontal = 12.dp, vertical = 4.dp),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 painter = painterResource(iconRes),
                 contentDescription = label,
-                tint = if (isSelected) ActiveNeonPink else InactiveIcon,
+                tint = if (isSelected) ActiveColor else InactiveColor,
                 modifier = Modifier.size(22.dp)
             )
         }
@@ -433,8 +434,8 @@ private fun BottomNavItem(
         Text(
             text = label,
             fontSize = 11.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
-            color = if (isSelected) ActiveNeonPink else InactiveIcon
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            color = if (isSelected) ActiveColor else InactiveColor
         )
     }
 }
@@ -447,7 +448,7 @@ private fun FullScreenLogScreen(isRunning: Boolean) {
     LaunchedEffect(isRunning) {
         if (!isRunning) {
             logLines.clear()
-            logLines.add("● Engine Standby. Tekan START untuk memulai pemantauan log.")
+            logLines.add("● Engine Standby. Tekan START untuk memantau log.")
             return@LaunchedEffect
         }
         withContext(Dispatchers.IO) {
@@ -480,8 +481,7 @@ private fun FullScreenLogScreen(isRunning: Boolean) {
         modifier = Modifier
             .fillMaxSize()
             .padding(10.dp)
-            .background(DarkBarSurface, RoundedCornerShape(14.dp))
-            .border(1.dp, Color(0xFF332050), RoundedCornerShape(14.dp))
+            .background(Color(0xFF1E1E2E), RoundedCornerShape(14.dp))
             .padding(12.dp)
     ) {
         Row(
@@ -495,16 +495,16 @@ private fun FullScreenLogScreen(isRunning: Boolean) {
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
                 ),
-                color = if (isRunning) ActiveNeonPink else InactiveIcon
+                color = if (isRunning) Color(0xFFFF4081) else Color.Gray
             )
             Text(
                 text = "${logLines.size} entries",
                 fontSize = 11.sp,
-                color = InactiveIcon
+                color = Color.LightGray
             )
         }
 
-        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 0.5.dp, color = Color(0xFF332050))
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 0.5.dp, color = Color(0xFF33334D))
 
         LazyColumn(
             state = listState,
