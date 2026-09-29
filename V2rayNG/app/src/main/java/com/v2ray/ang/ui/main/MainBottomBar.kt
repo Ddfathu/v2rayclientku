@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,7 +18,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,6 +36,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.R
 import com.v2ray.ang.ui.compose.AppDivider
@@ -57,7 +62,11 @@ fun MainBottomBar(
         }
     }
 
-    Box(modifier = Modifier.fillMaxWidth()) {
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        // Container Status Bar Bagian Bawah
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -69,20 +78,24 @@ fun MainBottomBar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(64.dp)
-                    .padding(horizontal = 16.dp),
+                    .height(68.dp)
+                    .padding(horizontal = 20.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = displayText,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = if (isRunning) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
                     modifier = Modifier.semantics {
                         contentDescription = displayText
                     }
                 )
             }
         }
+
+        // Tombol Play / Stop Floating di Tengah Atas Bottom Bar
         FloatingActionButton(
             onClick = {
                 if (!isRunning) {
@@ -95,10 +108,12 @@ fun MainBottomBar(
                 }
                 onAction(MainAction.ToggleService)
             },
+            shape = RoundedCornerShape(20.dp),
+            elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp),
             modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(end = 24.dp)
+                .align(Alignment.TopCenter)
                 .offset(y = (-28).dp)
+                .size(62.dp)
                 .navigationBarsPadding(),
             containerColor = if (isRunning) colorFabActive
             else if (isDarkTheme) colorFabInactiveDark
@@ -112,7 +127,7 @@ fun MainBottomBar(
                 ),
                 tint = Color.White,
                 modifier = Modifier
-                    .size(24.dp)
+                    .size(28.dp)
                     .graphicsLayer { rotationZ = rotationAnim.value }
             )
         }
