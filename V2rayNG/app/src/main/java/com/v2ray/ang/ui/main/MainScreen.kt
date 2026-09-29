@@ -43,12 +43,13 @@ import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-private val CyberBackground = Color(0xFF0F0817)
-private val CyberSurface    = Color(0xFF1B0E2B)
-private val CyberCardBorder = Color(0xFF2E124D)
-private val CyberCyan       = Color(0xFFE91E63)
-private val CyberPink       = Color(0xFFFF2A6D)
-private val CyberTextMuted  = Color(0xFFB39DDB)
+// Palet Kontras Jelas & Terang
+private val DarkBackground = Color(0xFF120C1F) // Ungu gelap pekat
+private val DarkBarSurface = Color(0xFF1F1433) // Bilah navigasi bawah terang berkelas
+private val ActiveNeonPink = Color(0xFFFF2A85) // Pink neon menyala
+private val ActivePillBg   = Color(0x33FF2A85) // Sorotan kapsul aktif
+private val InactiveIcon   = Color(0xFFD1C4E9) // Ungu muda sangat terang (jelas terlihat)
+private val TextWhiteColor = Color(0xFFFFFFFF) // Putih solid
 
 @Composable
 fun MainScreen(
@@ -171,10 +172,10 @@ fun MainScreen(
         }
     ) {
         Scaffold(
-            containerColor = CyberBackground,
+            containerColor = DarkBackground,
             contentWindowInsets = ScaffoldDefaults.contentWindowInsets,
             topBar = {
-                Column(modifier = Modifier.background(CyberBackground)) {
+                Column(modifier = Modifier.background(DarkBackground)) {
                     MainTopBar(
                         isLoading = isLoading,
                         showSearch = showSearch,
@@ -210,14 +211,14 @@ fun MainScreen(
                     if (groups.isNotEmpty() && currentBottomNav == 0) {
                         ScrollableTabRow(
                             selectedTabIndex = pagerState.currentPage.coerceIn(0, groups.lastIndex),
-                            containerColor = CyberBackground,
-                            contentColor = CyberCyan,
-                            edgePadding = 12.dp,
+                            containerColor = DarkBackground,
+                            contentColor = ActiveNeonPink,
+                            edgePadding = 16.dp,
                             indicator = { tabPositions ->
                                 val activeIdx = pagerState.currentPage.coerceIn(0, groups.lastIndex)
                                 TabRowDefaults.SecondaryIndicator(
                                     modifier = Modifier.tabIndicatorOffset(tabPositions[activeIdx]),
-                                    color = CyberCyan,
+                                    color = ActiveNeonPink,
                                     height = 3.dp
                                 )
                             }
@@ -234,9 +235,9 @@ fun MainScreen(
                                     text = {
                                         Text(
                                             text = group.remarks.ifEmpty { "Default" },
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                            color = if (isSelected) CyberCyan else CyberTextMuted,
-                                            fontSize = 13.sp
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            color = if (isSelected) TextWhiteColor else InactiveIcon,
+                                            fontSize = 14.sp
                                         )
                                     }
                                 )
@@ -260,7 +261,7 @@ fun MainScreen(
                         expanded = showImportDropdown,
                         onDismissRequest = { showImportDropdown = false },
                         scrollState = importScrollState,
-                        containerColor = CyberSurface,
+                        containerColor = DarkBarSurface,
                         modifier = Modifier
                             .heightIn(max = maxMenuHeight)
                             .verticalScrollbar(importScrollState)
@@ -304,7 +305,7 @@ fun MainScreen(
                             onShareServer = { guid, profile -> shareTarget = Triple(guid, profile, false) },
                             onMoreServer = { guid, profile -> shareTarget = Triple(guid, profile, true) },
                             onRemoveServer = removeServer,
-                            contentPadding = PaddingValues(start = 0.dp, top = 8.dp, end = 0.dp, bottom = 16.dp)
+                            contentPadding = PaddingValues(start = 6.dp, top = 10.dp, end = 6.dp, bottom = 16.dp)
                         )
                     }
                 } else {
@@ -325,74 +326,76 @@ private fun ModernBottomBar(
     onOpenSettings: () -> Unit
 ) {
     Surface(
-        color = CyberSurface,
-        border = androidx.compose.foundation.BorderStroke(0.5.dp, CyberCardBorder),
+        color = DarkBarSurface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF332050)),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 6.dp, horizontal = 8.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // 1. Config
-            BottomNavItem(
-                iconRes = R.drawable.ic_file_24dp,
-                label = "Config",
-                isSelected = currentTab == 0,
-                onClick = { onTabSelected(0) }
-            )
-
-            // 2. Tambah / Import
-            BottomNavItem(
-                iconRes = R.drawable.ic_add_24dp,
-                label = "Tambah",
-                isSelected = false,
-                onClick = onAddClicked
-            )
-
-            // 3. Tombol Tengah START / STOP (Bentuk murni tanpa risiko missing icon)
-            Box(
+        Column(modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)) {
+            Row(
                 modifier = Modifier
-                    .clip(CircleShape)
-                    .background(if (isRunning) CyberPink else CyberCyan)
-                    .clickable { onConnectToggle() }
-                    .padding(horizontal = 14.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .padding(horizontal = 6.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = if (isRunning) "■" else "▶",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.width(5.dp))
-                    Text(
-                        text = if (isRunning) "STOP" else "START",
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 11.sp,
-                        color = Color.White
-                    )
+                // 1. Config
+                BottomNavItem(
+                    iconRes = R.drawable.ic_file_24dp,
+                    label = "Config",
+                    isSelected = currentTab == 0,
+                    onClick = { onTabSelected(0) }
+                )
+
+                // 2. Tambah / Import
+                BottomNavItem(
+                    iconRes = R.drawable.ic_add_24dp,
+                    label = "Tambah",
+                    isSelected = false,
+                    onClick = onAddClicked
+                )
+
+                // 3. Tombol Tengah START / STOP
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(if (isRunning) Color(0xFFD81B60) else Color(0xFF00C853))
+                        .clickable { onConnectToggle() }
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = if (isRunning) "■" else "▶",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(5.dp))
+                        Text(
+                            text = if (isRunning) "STOP" else "START",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 12.sp,
+                            color = Color.White
+                        )
+                    }
                 }
+
+                // 4. Live Log
+                BottomNavItem(
+                    iconRes = R.drawable.ic_logcat_24dp,
+                    label = "Live Log",
+                    isSelected = currentTab == 1,
+                    onClick = { onTabSelected(1) }
+                )
+
+                // 5. Setelan
+                BottomNavItem(
+                    iconRes = R.drawable.ic_settings_24dp,
+                    label = "Setelan",
+                    isSelected = false,
+                    onClick = onOpenSettings
+                )
             }
-
-            // 4. Live Log
-            BottomNavItem(
-                iconRes = R.drawable.ic_logcat_24dp,
-                label = "Live Log",
-                isSelected = currentTab == 1,
-                onClick = { onTabSelected(1) }
-            )
-
-            // 5. Setelan
-            BottomNavItem(
-                iconRes = R.drawable.ic_settings_24dp,
-                label = "Setelan",
-                isSelected = false,
-                onClick = onOpenSettings
-            )
         }
     }
 }
@@ -408,30 +411,30 @@ private fun BottomNavItem(
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
             .clickable { onClick() }
-            .padding(horizontal = 6.dp, vertical = 4.dp),
+            .padding(horizontal = 4.dp, vertical = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Box(
             modifier = Modifier
-                .clip(RoundedCornerShape(14.dp))
-                .background(if (isSelected) CyberCyan.copy(alpha = 0.2f) else Color.Transparent)
+                .clip(RoundedCornerShape(16.dp))
+                .background(if (isSelected) ActivePillBg else Color.Transparent)
                 .padding(horizontal = 12.dp, vertical = 4.dp),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 painter = painterResource(iconRes),
                 contentDescription = label,
-                tint = if (isSelected) CyberCyan else CyberTextMuted,
-                modifier = Modifier.size(20.dp)
+                tint = if (isSelected) ActiveNeonPink else InactiveIcon,
+                modifier = Modifier.size(22.dp)
             )
         }
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = label,
-            fontSize = 10.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isSelected) CyberCyan else CyberTextMuted
+            fontSize = 11.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+            color = if (isSelected) ActiveNeonPink else InactiveIcon
         )
     }
 }
@@ -444,7 +447,7 @@ private fun FullScreenLogScreen(isRunning: Boolean) {
     LaunchedEffect(isRunning) {
         if (!isRunning) {
             logLines.clear()
-            logLines.add("● Engine Standby. Tekan tombol START untuk menjalankan koneksi.")
+            logLines.add("● Engine Standby. Tekan START untuk memulai pemantauan log.")
             return@LaunchedEffect
         }
         withContext(Dispatchers.IO) {
@@ -456,14 +459,14 @@ private fun FullScreenLogScreen(isRunning: Boolean) {
                     line = reader.readLine() ?: break
                     if (line.isNotBlank()) {
                         withContext(Dispatchers.Main) {
-                            if (logLines.size > 200) logLines.removeAt(0)
+                            if (logLines.size > 250) logLines.removeAt(0)
                             logLines.add(line)
                         }
                     }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    logLines.add("Error stream log: ${e.message}")
+                    logLines.add("Error stream: ${e.message}")
                 }
             }
         }
@@ -477,8 +480,8 @@ private fun FullScreenLogScreen(isRunning: Boolean) {
         modifier = Modifier
             .fillMaxSize()
             .padding(10.dp)
-            .background(CyberSurface, RoundedCornerShape(12.dp))
-            .border(1.dp, CyberCardBorder, RoundedCornerShape(12.dp))
+            .background(DarkBarSurface, RoundedCornerShape(14.dp))
+            .border(1.dp, Color(0xFF332050), RoundedCornerShape(14.dp))
             .padding(12.dp)
     ) {
         Row(
@@ -487,21 +490,21 @@ private fun FullScreenLogScreen(isRunning: Boolean) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = if (isRunning) "● LIVE ENGINE LOG" else "○ ENGINE IDLE",
+                text = if (isRunning) "● LIVE ENGINE LOG" else "○ IDLE",
                 style = MaterialTheme.typography.labelMedium.copy(
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
                 ),
-                color = if (isRunning) CyberCyan else Color.Gray
+                color = if (isRunning) ActiveNeonPink else InactiveIcon
             )
             Text(
-                text = "${logLines.size} lines",
+                text = "${logLines.size} entries",
                 fontSize = 11.sp,
-                color = CyberTextMuted
+                color = InactiveIcon
             )
         }
 
-        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 0.5.dp, color = CyberCardBorder)
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 0.5.dp, color = Color(0xFF332050))
 
         LazyColumn(
             state = listState,
@@ -510,7 +513,7 @@ private fun FullScreenLogScreen(isRunning: Boolean) {
             items(logLines) { line ->
                 Text(
                     text = line,
-                    color = Color(0xFFE2E8F0),
+                    color = Color(0xFFECEFF1),
                     fontFamily = FontFamily.Monospace,
                     fontSize = 10.sp,
                     lineHeight = 14.sp
