@@ -867,9 +867,10 @@ object CoreConfigManager {
     ) {
         val servers = ArrayList<Any>()
         
-        // FITUR 4: FORCE CLOUDFLARE DOH GUARD
-        val remoteDns = if (MmkvManager.isCfForceDohEnabled()) {
-            listOf("https://1.1.1.1/dns-query", "https://cloudflare-dns.com/dns-query")
+        // PENGATURAN 1: CUSTOM DOH DNS (DEFAULT MATI)
+        val remoteDns = if (MmkvManager.isCustomDohEnabled()) {
+            val dohUrl = MmkvManager.getCustomDohUrl().trim()
+            if (dohUrl.isNotEmpty()) listOf(dohUrl) else SettingsManager.getRemoteDnsServers()
         } else {
             SettingsManager.getRemoteDnsServers()
         }
@@ -1103,37 +1104,19 @@ object CoreConfigManager {
      * Convert one profile object into one outbound object.
      */
     private fun convertProfile2Outbound(profileItem: ProfileItem): V2rayConfig.OutboundBean? {
-        // FITUR 1: Jika ada Clean IP aktif, ganti alamat server profil sebelum konversi
-        val cleanIp = MmkvManager.getCfCleanIp().trim()
-        val targetProfile = if (cleanIp.isNotEmpty()) {
-            profileItem.copy(server = cleanIp)
-        } else {
-            profileItem
-        }
+        val outbound = CoreOutboundBuilder.convert(profileItem) ?: return null
 
-        val outbound = CoreOutboundBuilder.convert(targetProfile) ?: return null
-
-        // FITUR UTAMA & FITUR 3: CLOUDFLARE TURBO & CUSTOM RELAY
-        if (MmkvManager.isCfXudpEnabled()) {
-            // Hindari MUX bawaan client agar paket CMD_UDP standar langsung diterima worker
-            outbound.mux = null
-
-            // Injeksi Custom UDP Relay Target & 0-RTT Early Data (?ed=2048) ke path WebSocket
-            val currentPath = outbound.streamSettings?.wsSettings?.path
-            if (!currentPath.isNullOrBlank()) {
-                var newPath = currentPath
-                val customRelay = MmkvManager.getCfRelayHost().trim()
-                if (customRelay.isNotEmpty() && !newPath.contains(customRelay) && customRelay != "wsudprelay.up.railway.app:443") {
-                    val cleanRelay = customRelay.replace("https://", "").replace("http://", "").trimEnd('/')
-                    if (!newPath.contains("=")) {
-                        newPath = if (newPath.endsWith("/")) "$newPath$cleanRelay" else "$newPath/$cleanRelay"
-                    }
+        // PENGATURAN 2: CUSTOM UDP RELAY TARGET (DEFAULT MATI)
+        // Hanya disisipkan ke path jika sakelar dinyalakan manual
+        if (MmkvManager.isUdpRelayEnabled()) {
+            val customRelay = MmkvManager.getCustomUdpRelay().trim()
+            if (customRelay.isNotEmpty()) {
+                val currentPath = outbound.streamSettings?.wsSettings?.path ?: ""
+                val cleanRelay = customRelay.replace("https://", "").replace("http://", "").trimEnd('/')
+                if (!currentPath.contains("relay=")) {
+                    val separator = if (currentPath.contains("?")) "&" else "?"
+                    outbound.streamSettings?.wsSettings?.path = "$currentPath${separator}relay=$cleanRelay"
                 }
-                if (!newPath.contains("ed=")) {
-                    val separator = if (newPath.contains("?")) "&" else "?"
-                    newPath = "$newPath${separator}ed=2048"
-                }
-                outbound.streamSettings?.wsSettings?.path = newPath
             }
         }
 
