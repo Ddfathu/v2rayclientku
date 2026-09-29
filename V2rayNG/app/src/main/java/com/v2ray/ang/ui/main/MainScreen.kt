@@ -14,13 +14,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.filled.Terminal
-import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
@@ -29,8 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -50,14 +43,12 @@ import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-// Palet Cyber Dark / Deep Purple
-private val CyberBackground = Color(0xFF0F0817) // Background utama gelap bernuansa ungu
-private val CyberSurface    = Color(0xFF1B0E2B) // Latar kartu dan bottom bar
-private val CyberCardBorder = Color(0xFF2E124D) // Border halus
-private val CyberCyan       = Color(0xFFE91E63) // Pink cerah aktif
-private val CyberPink       = Color(0xFFFF2A6D) // Tombol stop
-private val CyberTextMuted  = Color(0xFFB39DDB) // Ungu muda redup
-private val TextWhiteColor  = Color(0xFFFFFFFF)
+private val CyberBackground = Color(0xFF0F0817)
+private val CyberSurface    = Color(0xFF1B0E2B)
+private val CyberCardBorder = Color(0xFF2E124D)
+private val CyberCyan       = Color(0xFFE91E63)
+private val CyberPink       = Color(0xFFFF2A6D)
+private val CyberTextMuted  = Color(0xFFB39DDB)
 
 @Composable
 fun MainScreen(
@@ -96,10 +87,7 @@ fun MainScreen(
         }
     }
 
-    // Navigasi Bawah: 0 = Configs, 1 = Live Log
     var currentBottomNav by rememberSaveable { mutableStateOf(0) }
-
-    // State untuk Dropdown Tambah/Import Config dari Bottom Bar
     var showImportDropdown by remember { mutableStateOf(false) }
     val importScrollState = rememberScrollState()
     val maxMenuHeight = (LocalConfiguration.current.screenHeightDp.dp * 0.7f)
@@ -219,7 +207,6 @@ fun MainScreen(
                         }
                     )
 
-                    // Sub Tabs Grup Kategori
                     if (groups.isNotEmpty() && currentBottomNav == 0) {
                         ScrollableTabRow(
                             selectedTabIndex = pagerState.currentPage.coerceIn(0, groups.lastIndex),
@@ -259,26 +246,16 @@ fun MainScreen(
                 }
             },
             bottomBar = {
-                // Bottom Bar dengan Menu Tambah Config
                 Box {
                     ModernBottomBar(
                         currentTab = currentBottomNav,
                         isRunning = isRunning,
-                        onTabSelected = { tabIndex ->
-                            currentBottomNav = tabIndex
-                        },
-                        onAddClicked = {
-                            showImportDropdown = true
-                        },
-                        onConnectToggle = {
-                            onAction(MainAction.ToggleService)
-                        },
-                        onOpenSettings = {
-                            onNavigate(MainDestination.Settings)
-                        }
+                        onTabSelected = { tabIndex -> currentBottomNav = tabIndex },
+                        onAddClicked = { showImportDropdown = true },
+                        onConnectToggle = { onAction(MainAction.ToggleService) },
+                        onOpenSettings = { onNavigate(MainDestination.Settings) }
                     )
 
-                    // Menu Pop-up Tambah / Import Config
                     DropdownMenu(
                         expanded = showImportDropdown,
                         onDismissRequest = { showImportDropdown = false },
@@ -359,23 +336,20 @@ private fun ModernBottomBar(
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 1. Menu Config
             BottomNavItem(
-                icon = Icons.Default.VpnKey,
+                iconRes = R.drawable.ic_file_24dp,
                 label = "Config",
                 isSelected = currentTab == 0,
                 onClick = { onTabSelected(0) }
             )
 
-            // 2. Menu Tambah / Import Config
             BottomNavItem(
-                icon = Icons.Default.Add,
+                iconRes = R.drawable.ic_add_24dp,
                 label = "Tambah",
                 isSelected = false,
                 onClick = onAddClicked
             )
 
-            // 3. Tombol Kapsul START / STOP
             Box(
                 modifier = Modifier
                     .clip(CircleShape)
@@ -386,7 +360,7 @@ private fun ModernBottomBar(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = if (isRunning) Icons.Default.Stop else Icons.Default.PlayArrow,
+                        painter = painterResource(if (isRunning) R.drawable.ic_close_24dp else R.drawable.ic_play_24dp),
                         contentDescription = null,
                         tint = Color.White,
                         modifier = Modifier.size(18.dp)
@@ -401,17 +375,15 @@ private fun ModernBottomBar(
                 }
             }
 
-            // 4. Menu Live Log
             BottomNavItem(
-                icon = Icons.Default.Terminal,
+                iconRes = R.drawable.ic_logcat_24dp,
                 label = "Live Log",
                 isSelected = currentTab == 1,
                 onClick = { onTabSelected(1) }
             )
 
-            // 5. Menu Setelan
             BottomNavItem(
-                icon = Icons.Default.Settings,
+                iconRes = R.drawable.ic_settings_24dp,
                 label = "Setelan",
                 isSelected = false,
                 onClick = onOpenSettings
@@ -422,7 +394,7 @@ private fun ModernBottomBar(
 
 @Composable
 private fun BottomNavItem(
-    icon: ImageVector,
+    iconRes: Int,
     label: String,
     isSelected: Boolean,
     onClick: () -> Unit
@@ -443,7 +415,7 @@ private fun BottomNavItem(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = icon,
+                painter = painterResource(iconRes),
                 contentDescription = label,
                 tint = if (isSelected) CyberCyan else CyberTextMuted,
                 modifier = Modifier.size(20.dp)

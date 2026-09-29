@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,9 +30,9 @@ import com.v2ray.ang.R
 import com.v2ray.ang.ui.compose.AppTopBar
 import com.v2ray.ang.ui.compose.verticalScrollbar
 
-private val PurpleAppBarBg = Color(0xFF2E0854) // Ungu pekat gelap
-private val ContentWhite   = Color(0xFFFFFFFF) // Teks & icon putih kontras
-private val PurpleDropdown = Color(0xFF38006B) // Dropdown popup menu
+private val PurpleAppBarBg = Color(0xFF2E0854)
+private val ContentWhite   = Color(0xFFFFFFFF)
+private val PurpleDropdown = Color(0xFF38006B)
 
 @Composable
 fun MainTopBar(
@@ -91,12 +89,11 @@ fun MainTopBar(
             },
             actions = {
                 if (!showSearch) {
-                    // TOMBOL PETIR KHUSUS TES TCP PING
                     IconButton(onClick = { onAction(MainAction.TestAllServers) }) {
                         Icon(
-                            imageVector = Icons.Default.Bolt,
+                            painter = painterResource(R.drawable.ic_stat_name),
                             contentDescription = "Test TCP Delays",
-                            tint = Color(0xFFFFD54F) // Kuning petir menyala
+                            tint = Color(0xFFFFD54F)
                         )
                     }
 
