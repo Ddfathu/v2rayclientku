@@ -1,28 +1,24 @@
 package com.v2ray.ang.ui.main
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -54,14 +50,12 @@ import com.v2ray.ang.R
 import com.v2ray.ang.dto.LocateTarget
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.ui.compose.ReorderableGridItem
-import com.v2ray.ang.ui.compose.ReorderableListItem
 import com.v2ray.ang.ui.compose.colorConfigType
 import com.v2ray.ang.ui.compose.colorPing
 import com.v2ray.ang.ui.compose.colorPingRed
 import com.v2ray.ang.ui.compose.verticalScrollbar
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyGridState
-import sh.calvin.reorderable.rememberReorderableLazyListState
 import kotlin.math.abs
 
 @Composable
@@ -106,9 +100,7 @@ fun GroupPagerPage(
         selectedGuid = selectedGuid,
         locateTarget = locateTarget?.takeIf { it.groupId == groupId },
         canReorder = canReorder,
-        doubleColumnDisplay = doubleColumnDisplay,
         groupId = groupId,
-        lazyListStates = lazyListStates,
         lazyGridStates = lazyGridStates,
         actions = actions,
         onLocateHandled = { mainViewModel.onAction(MainAction.LocateHandled) },
@@ -133,120 +125,58 @@ private fun ServerListPage(
     selectedGuid: String?,
     locateTarget: LocateTarget?,
     canReorder: Boolean,
-    doubleColumnDisplay: Boolean,
     groupId: String,
-    lazyListStates: MutableMap<String, LazyListState>,
     lazyGridStates: MutableMap<String, LazyGridState>,
     actions: ServerRowActions,
     onLocateHandled: () -> Unit,
     onMoveServer: (Int, Int) -> Unit,
     contentPadding: PaddingValues
 ) {
-    if (doubleColumnDisplay) {
-        val gridState = remember(groupId) {
-            lazyGridStates.getOrPut(groupId) { LazyGridState() }
-        }
-        val reorderableGridState = if (canReorder) {
-            rememberReorderableLazyGridState(gridState) { from, to ->
-                onMoveServer(from.index, to.index)
-            }
-        } else null
-
-        LocateTargetEffect(locateTarget, rows, gridState, onLocateHandled)
-
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            state = gridState,
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScrollbar(gridState),
-            contentPadding = contentPadding
-        ) {
-            itemsIndexed(items = rows, key = { _, item -> item.guid }) { _, row ->
-                val content: @Composable () -> Unit = {
-                    ServerItemColumn(
-                        row = row,
-                        isSelected = row.guid == selectedGuid,
-                        doubleColumnDisplay = true,
-                        actions = actions
-                    )
-                }
-                if (canReorder && reorderableGridState != null) {
-                    ReorderableItem(
-                        reorderableGridState,
-                        key = row.guid
-                    ) { isDragging ->
-                        ReorderableGridItem(
-                            scope = this,
-                            isDragging = isDragging
-                        ) { content() }
-                    }
-                } else {
-                    content()
-                }
-            }
-        }
-    } else {
-        val listState = remember(groupId) {
-            lazyListStates.getOrPut(groupId) { LazyListState() }
-        }
-        val reorderableState = if (canReorder) {
-            rememberReorderableLazyListState(listState) { from, to ->
-                onMoveServer(from.index, to.index)
-            }
-        } else null
-
-        LocateTargetEffect(locateTarget, rows, listState, onLocateHandled)
-
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScrollbar(listState),
-            contentPadding = contentPadding
-        ) {
-            itemsIndexed(items = rows, key = { _, item -> item.guid }) { _, row ->
-                if (canReorder && reorderableState != null) {
-                    ReorderableItem(
-                        reorderableState,
-                        key = row.guid
-                    ) { isDragging ->
-                        ReorderableListItem(
-                            scope = this,
-                            isDragging = isDragging
-                        ) {
-                            ServerItemRow(
-                                row = row,
-                                isSelected = row.guid == selectedGuid,
-                                actions = actions
-                            )
-                        }
-                    }
-                } else {
-                    ServerItemRow(
-                        row = row,
-                        isSelected = row.guid == selectedGuid,
-                        actions = actions
-                    )
-                }
-            }
-        }
+    // Dipaksa menjadi Grid 2 Kolom (Kotak Bersebelahan)
+    val gridState = remember(groupId) {
+        lazyGridStates.getOrPut(groupId) { LazyGridState() }
     }
-}
+    val reorderableGridState = if (canReorder) {
+        rememberReorderableLazyGridState(gridState) { from, to ->
+            onMoveServer(from.index, to.index)
+        }
+    } else null
 
-@Composable
-private fun LocateTargetEffect(
-    target: LocateTarget?,
-    rows: List<ServerRowUiModel>,
-    state: LazyListState,
-    onHandled: () -> Unit,
-) {
-    if (target == null) return
-    LaunchedEffect(target, rows) {
-        val index = rows.indexOfFirst { it.guid == target.serverGuid }
-        if (index < 0) return@LaunchedEffect
-        state.scrollToItem(index, -state.layoutInfo.viewportSize.height / 3)
-        onHandled()
+    LocateTargetEffect(locateTarget, rows, gridState, onLocateHandled)
+
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        state = gridState,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 6.dp)
+            .verticalScrollbar(gridState),
+        contentPadding = contentPadding,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        itemsIndexed(items = rows, key = { _, item -> item.guid }) { _, row ->
+            val content: @Composable () -> Unit = {
+                ServerGridCardItem(
+                    row = row,
+                    isSelected = row.guid == selectedGuid,
+                    actions = actions
+                )
+            }
+            if (canReorder && reorderableGridState != null) {
+                ReorderableItem(
+                    reorderableGridState,
+                    key = row.guid
+                ) { isDragging ->
+                    ReorderableGridItem(
+                        scope = this,
+                        isDragging = isDragging
+                    ) { content() }
+                }
+            } else {
+                content()
+            }
+        }
     }
 }
 
@@ -267,39 +197,9 @@ private fun LocateTargetEffect(
 }
 
 @Composable
-private fun ServerItemRow(
+private fun ServerGridCardItem(
     row: ServerRowUiModel,
     isSelected: Boolean,
-    actions: ServerRowActions
-) {
-    ServerListItem(
-        row = row,
-        isSelected = isSelected,
-        doubleColumnDisplay = false,
-        actions = actions
-    )
-}
-
-@Composable
-private fun ServerItemColumn(
-    row: ServerRowUiModel,
-    isSelected: Boolean,
-    doubleColumnDisplay: Boolean,
-    actions: ServerRowActions
-) {
-    ServerListItem(
-        row = row,
-        isSelected = isSelected,
-        doubleColumnDisplay = doubleColumnDisplay,
-        actions = actions
-    )
-}
-
-@Composable
-private fun ServerListItem(
-    row: ServerRowUiModel,
-    isSelected: Boolean,
-    doubleColumnDisplay: Boolean,
     actions: ServerRowActions
 ) {
     val testResult = if (row.testDelayMillis == 0L) {
@@ -316,139 +216,133 @@ private fun ServerListItem(
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 5.dp)
+            .height(175.dp) // Ukuran proporsional bentuk kotak
             .semantics {
                 if (selectedStateDescription != null) {
                     stateDescription = selectedStateDescription
                 }
             }
             .clickable { actions.select(row.guid) },
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(18.dp),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = if (isSelected) 6.dp else 2.dp),
+        border = if (isSelected) BorderStroke(2.dp, Color(0xFF7B1FA2)) else BorderStroke(0.5.dp, Color(0xFFE2E8F0)),
         colors = CardDefaults.elevatedCardColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface
+            containerColor = if (isSelected) Color(0xFFF3E5F5) else MaterialTheme.colorScheme.surface
         )
     ) {
-        Row(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(IntrinsicSize.Min)
+                .fillMaxSize()
+                .padding(10.dp),
+            verticalArrangement = Arrangement.SpaceBetween // Elemen atas terdorong ke atas, tombol terdorong ke bawah
         ) {
-            Box(
-                Modifier
-                    .width(6.dp)
-                    .fillMaxHeight()
-                    .background(
-                        if (isSelected) MaterialTheme.colorScheme.primary
-                        else Color.Transparent
-                    )
-            )
-
-            Column(
-                Modifier
-                    .weight(1f)
-                    .padding(horizontal = 14.dp, vertical = 12.dp)
-            ) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            // Bagian Atas: Nama Config & Status
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (isSelected) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF7B1FA2))
+                        )
+                        Spacer(modifier = Modifier.size(6.dp))
+                    }
                     Text(
-                        row.remarks,
-                        Modifier.weight(1f),
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                        text = row.remarks,
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.Bold,
                             lineBreak = LineBreak.Paragraph
                         ),
                         maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
                     )
-                    if (doubleColumnDisplay) {
-                        IconButton(onClick = { actions.more(row.guid, row.profile) }, Modifier.size(32.dp)) {
-                            Icon(
-                                painterResource(R.drawable.ic_more_vert_24dp),
-                                stringResource(R.string.acc_more),
-                                Modifier.size(20.dp)
-                            )
-                        }
-                    } else {
-                        IconButton(onClick = { actions.share(row.guid, row.profile) }, Modifier.size(32.dp)) {
-                            Icon(
-                                painterResource(R.drawable.ic_share_24dp),
-                                stringResource(R.string.title_configuration_share),
-                                Modifier.size(18.dp)
-                            )
-                        }
-                        IconButton(onClick = { actions.edit(row.guid, row.profile) }, Modifier.size(32.dp)) {
-                            Icon(
-                                painterResource(R.drawable.ic_edit_24dp),
-                                stringResource(R.string.acc_edit),
-                                Modifier.size(18.dp)
-                            )
-                        }
-                        IconButton(onClick = { actions.remove(row.guid, row.remarks) }, Modifier.size(32.dp)) {
-                            Icon(
-                                painterResource(R.drawable.ic_delete_24dp),
-                                stringResource(R.string.acc_delete),
-                                Modifier.size(18.dp)
-                            )
-                        }
-                    }
                 }
 
                 if (row.statistics.isNotBlank() || row.subscriptionBadge.isNotBlank()) {
                     Spacer(modifier = Modifier.height(4.dp))
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        if (row.subscriptionBadge.isNotBlank()) {
-                            Box(
-                                Modifier
-                                    .padding(end = 6.dp)
-                                    .size(20.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
-                                Alignment.Center
-                            ) {
-                                Text(
-                                    row.subscriptionBadge.uppercase(),
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                        Text(
-                            row.statistics,
-                            Modifier.weight(1f),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
+                    Text(
+                        text = row.statistics,
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
+            }
 
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(colorConfigType.copy(alpha = 0.12f))
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            row.typeDescription,
-                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
-                            color = colorConfigType,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    if (testResult.isNotBlank()) {
-                        Text(
-                            testResult,
-                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                            color = if (row.testDelayMillis < 0L) colorPingRed else colorPing,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
+            // Bagian Tengah: Badge Tipe Protokol & Hasil Ping
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(colorConfigType.copy(alpha = 0.12f))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = row.typeDescription,
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                        color = colorConfigType,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                if (testResult.isNotBlank()) {
+                    Text(
+                        text = testResult,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp
+                        ),
+                        color = if (row.testDelayMillis < 0L) colorPingRed else colorPing,
+                        maxLines = 1
+                    )
+                }
+            }
+
+            // Bagian Bawah: Barisan Tombol Hapus, Edit, Share di dasar kartu
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = { actions.share(row.guid, row.profile) },
+                    modifier = Modifier.size(30.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_share_24dp),
+                        contentDescription = stringResource(R.string.title_configuration_share),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+                IconButton(
+                    onClick = { actions.edit(row.guid, row.profile) },
+                    modifier = Modifier.size(30.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_edit_24dp),
+                        contentDescription = stringResource(R.string.acc_edit),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+                IconButton(
+                    onClick = { actions.remove(row.guid, row.remarks) },
+                    modifier = Modifier.size(30.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_delete_24dp),
+                        contentDescription = stringResource(R.string.acc_delete),
+                        modifier = Modifier.size(16.dp)
+                    )
                 }
             }
         }
