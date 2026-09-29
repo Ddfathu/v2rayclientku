@@ -1,10 +1,13 @@
 package com.v2ray.ang.ui.main
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -19,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
@@ -29,8 +33,8 @@ import androidx.compose.ui.unit.sp
 import com.v2ray.ang.R
 import com.v2ray.ang.ui.compose.verticalScrollbar
 
-private val TopBarBgDark = Color(0xFF160B24) // Ungu pekat elegan
-private val ContentWhite = Color(0xFFFFFFFF) // Putih terang kontras
+private val TopBarBgDark = Color(0xFF160B24) // Ungu gelap pekat
+private val ContentWhite = Color(0xFFFFFFFF) // Putih kontras terang
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,19 +57,24 @@ fun MainTopBar(
 
     TopAppBar(
         title = {
-            Text(
-                text = stringResource(R.string.title_server),
-                color = ContentWhite,
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp
-            )
+            // Tulisan "Config" dikosongkan/dihapus
         },
         navigationIcon = {
-            IconButton(onClick = onMenuClick) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_menu_24dp),
-                    contentDescription = stringResource(R.string.acc_open_menu),
-                    tint = ContentWhite
+            // Garis tiga diganti tombol teks "MENU"
+            Box(
+                modifier = Modifier
+                    .padding(start = 12.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { onMenuClick() }
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "MENU",
+                    color = ContentWhite,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 15.sp,
+                    letterSpacing = 1.sp
                 )
             }
         },
@@ -76,14 +85,7 @@ fun MainTopBar(
             actionIconContentColor = ContentWhite
         ),
         actions = {
-            // Tombol Petir TCPing
-            IconButton(onClick = { onAction(MainAction.TestAllServers) }) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_stat_name),
-                    contentDescription = "Test TCP Delays",
-                    tint = Color(0xFFFFD54F)
-                )
-            }
+            // Tombol "V" kuning sudah dihapus
 
             // Tombol Pencarian
             IconButton(onClick = { onSearchToggle(true) }) {
@@ -94,7 +96,7 @@ fun MainTopBar(
                 )
             }
 
-            // Menu Tambah / Import (+)
+            // Tombol Tambah / Import (+)
             Box(modifier = Modifier.wrapContentSize(Alignment.TopEnd)) {
                 IconButton(onClick = { showImportMenu = true }) {
                     Icon(
@@ -107,7 +109,7 @@ fun MainTopBar(
                     expanded = showImportMenu,
                     onDismissRequest = { showImportMenu = false },
                     scrollState = importMenuScrollState,
-                    containerColor = Color.White, // Latar putih bersih agar teks item kontras terlihat
+                    containerColor = Color.White,
                     modifier = Modifier
                         .heightIn(max = maxMenuHeight)
                         .verticalScrollbar(importMenuScrollState)
@@ -121,7 +123,7 @@ fun MainTopBar(
                 }
             }
 
-            // Menu Titik Tiga
+            // Tombol Menu Titik Tiga
             Box(modifier = Modifier.wrapContentSize(Alignment.TopEnd)) {
                 IconButton(onClick = { showMenu = true }) {
                     Icon(
@@ -134,7 +136,7 @@ fun MainTopBar(
                     expanded = showMenu,
                     onDismissRequest = { showMenu = false },
                     scrollState = moreMenuScrollState,
-                    containerColor = Color.White, // Latar putih bersih agar teks item kontras terlihat
+                    containerColor = Color.White,
                     modifier = Modifier
                         .heightIn(max = maxMenuHeight)
                         .verticalScrollbar(moreMenuScrollState)
@@ -148,3 +150,4 @@ fun MainTopBar(
         }
     )
 }
+ 
