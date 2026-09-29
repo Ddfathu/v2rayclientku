@@ -61,7 +61,7 @@ object SettingsManager {
      * Get preset routing rulesets.
      * @param context The application context.
      * @param type The routing preset type.
-     * @return A mutable list of RulesetItem.
+     * @return A mutable list of RulesetItem with all switches set to false by default.
      */
     private fun getPresetRoutingRulesets(context: Context, type: RoutingType = RoutingType.WHITE): MutableList<RulesetItem>? {
         val assets = Utils.readTextFromAssets(context, type.fileName)
@@ -69,7 +69,10 @@ object SettingsManager {
             return null
         }
 
-        return JsonUtil.fromJsonSafe(assets, Array<RulesetItem>::class.java)?.toMutableList()
+        val list = JsonUtil.fromJsonSafe(assets, Array<RulesetItem>::class.java)?.toMutableList()
+        // Paksa semua switch default menjadi MATI (false)
+        list?.forEach { it.enabled = false }
+        return list
     }
 
     /**
