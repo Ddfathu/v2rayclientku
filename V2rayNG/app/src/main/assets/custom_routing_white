@@ -11,21 +11,24 @@
     "outboundTag": "proxy",
     "domain": [
       "geosite:google"
-    ]
+    ],
+    "enabled": false
   },
   {
     "remarks": "绕过局域网IP",
     "outboundTag": "direct",
     "ip": [
       "geoip:private"
-    ]
+    ],
+    "enabled": false
   },
   {
     "remarks": "绕过局域网域名",
     "outboundTag": "direct",
     "domain": [
       "geosite:private"
-    ]
+    ],
+    "enabled": false
   },
   {
     "remarks": "绕过中国公共DNSIP",
@@ -66,7 +69,8 @@
       "2404:c2c0:85d8:901::8",
       "117.50.60.30",
       "52.80.60.30"
-    ]
+    ],
+    "enabled": false
   },
   {
     "remarks": "绕过中国公共DNS域名",
@@ -77,20 +81,23 @@
       "domain:dot.pub",
       "domain:360.cn",
       "domain:onedns.net"
-    ]
+    ],
+    "enabled": false
   },
   {
     "remarks": "绕过中国IP",
     "outboundTag": "direct",
     "ip": [
       "geoip:cn"
-    ]
+    ],
+    "enabled": false
   },
   {
     "remarks": "绕过中国域名",
     "outboundTag": "direct",
     "domain": [
       "geosite:cn"
-    ]
+    ],
+    "enabled": false
   }
 ]

@@ -336,6 +336,7 @@ private fun ModernBottomBar(
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // 1. Config
             BottomNavItem(
                 iconRes = R.drawable.ic_file_24dp,
                 label = "Config",
@@ -343,6 +344,7 @@ private fun ModernBottomBar(
                 onClick = { onTabSelected(0) }
             )
 
+            // 2. Tambah / Import
             BottomNavItem(
                 iconRes = R.drawable.ic_add_24dp,
                 label = "Tambah",
@@ -350,6 +352,7 @@ private fun ModernBottomBar(
                 onClick = onAddClicked
             )
 
+            // 3. Tombol Tengah START / STOP (Bentuk murni tanpa risiko missing icon)
             Box(
                 modifier = Modifier
                     .clip(CircleShape)
@@ -359,13 +362,13 @@ private fun ModernBottomBar(
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(if (isRunning) R.drawable.ic_close_24dp else R.drawable.ic_play_24dp),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp)
+                    Text(
+                        text = if (isRunning) "■" else "▶",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(5.dp))
                     Text(
                         text = if (isRunning) "STOP" else "START",
                         fontWeight = FontWeight.ExtraBold,
@@ -375,6 +378,7 @@ private fun ModernBottomBar(
                 }
             }
 
+            // 4. Live Log
             BottomNavItem(
                 iconRes = R.drawable.ic_logcat_24dp,
                 label = "Live Log",
@@ -382,6 +386,7 @@ private fun ModernBottomBar(
                 onClick = { onTabSelected(1) }
             )
 
+            // 5. Setelan
             BottomNavItem(
                 iconRes = R.drawable.ic_settings_24dp,
                 label = "Setelan",
