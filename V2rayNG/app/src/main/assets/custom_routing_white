@@ -3,7 +3,8 @@
     "remarks": "阻断udp443",
     "outboundTag": "block",
     "port": "443",
-    "network": "udp"
+    "network": "udp",
+    "enabled": false
   },
   {
     "remarks": "代理Google",
