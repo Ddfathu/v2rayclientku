@@ -51,8 +51,11 @@ object MmkvManager {
     private const val KEY_SUB_IDS = "SUB_IDS"
     private const val KEY_WEBDAV_CONFIG = "WEBDAV_CONFIG"
 
-    // KEY KHUSUS CLOUDFLARE XUDP
+    // KEY KHUSUS CLOUDFLARE FITUR BARU
     const val KEY_PREF_CF_XUDP = "pref_cloudflare_xudp"
+    const val KEY_PREF_CF_RELAY_HOST = "pref_cf_relay_host"
+    const val KEY_PREF_CF_FORCE_DOH = "pref_cf_force_doh"
+    const val KEY_PREF_CF_CLEAN_IP = "pref_cf_clean_ip"
 
     private val recoveryHandler = object : MMKVHandler {
         override fun onMMKVCRCCheckFail(mmapID: String) =
@@ -727,13 +730,37 @@ object MmkvManager {
         return decodeSettingsBool(PREF_IS_BOOTED, false)
     }
 
-    // --- HELPER UNTUK CLOUDFLARE XUDP GAME MODE ---
+    // --- HELPER UNTUK CLOUDFLARE FITUR BARU ---
     fun isCfXudpEnabled(): Boolean {
         return decodeSettingsBool(KEY_PREF_CF_XUDP, false)
     }
 
     fun setCfXudpEnabled(enabled: Boolean): Boolean {
         return encodeSettings(KEY_PREF_CF_XUDP, enabled)
+    }
+
+    fun getCfRelayHost(): String {
+        return decodeSettingsString(KEY_PREF_CF_RELAY_HOST) ?: "wsudprelay.up.railway.app:443"
+    }
+
+    fun setCfRelayHost(host: String): Boolean {
+        return encodeSettings(KEY_PREF_CF_RELAY_HOST, host)
+    }
+
+    fun isCfForceDohEnabled(): Boolean {
+        return decodeSettingsBool(KEY_PREF_CF_FORCE_DOH, false)
+    }
+
+    fun setCfForceDohEnabled(enabled: Boolean): Boolean {
+        return encodeSettings(KEY_PREF_CF_FORCE_DOH, enabled)
+    }
+
+    fun getCfCleanIp(): String {
+        return decodeSettingsString(KEY_PREF_CF_CLEAN_IP) ?: ""
+    }
+
+    fun setCfCleanIp(ip: String): Boolean {
+        return encodeSettings(KEY_PREF_CF_CLEAN_IP, ip)
     }
 
     //endregion

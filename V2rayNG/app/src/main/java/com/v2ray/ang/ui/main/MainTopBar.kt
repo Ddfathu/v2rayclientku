@@ -1,5 +1,6 @@
 package com.v2ray.ang.ui.main
 
+import android.app.Activity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,11 +33,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
 import com.v2ray.ang.R
 import com.v2ray.ang.ui.compose.verticalScrollbar
 
@@ -57,6 +61,19 @@ fun MainTopBar(
     onAction: (MainAction) -> Unit,
     onMoreMenuAction: (MainMoreMenuAction) -> Unit
 ) {
+    // Memaksa status bar sistem (jam, sinyal, baterai) menjadi PUTIH TERANG
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as? Activity)?.window
+            window?.let {
+                WindowCompat.getInsetsController(it, view).apply {
+                    isAppearanceLightStatusBars = false
+                }
+            }
+        }
+    }
+
     var showMenu by remember { mutableStateOf(false) }
     val moreMenuScrollState = rememberScrollState()
     val maxMenuHeight = (LocalConfiguration.current.screenHeightDp.dp * 0.7f)

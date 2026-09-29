@@ -416,8 +416,6 @@ object CoreConfigManager {
         val fallbackTag = if (strategyType.supportsObservatory && resolvedOutbound.profile.policyGroupTestOutbounds != false) {
             resolvedOutbound.profile.policyGroupFallbackTag
                 ?.takeIf { it.isNotEmpty() && it != AppConfig.TAG_PROXY }
-            // Xray excludes dead random/roundRobin candidates only when fallbackTag is set;
-            // without this default, an enabled empty field creates no observatory.
                 ?: membersToAdd.first().tag
         } else null
         val strategy = buildBalancerStrategy(
@@ -868,7 +866,13 @@ object CoreConfigManager {
         policyGroupBalancerTags: Map<String, String>,
     ) {
         val servers = ArrayList<Any>()
-        val remoteDns = SettingsManager.getRemoteDnsServers()
+        
+        // FITUR 4: FORCE CLOUDFLARE DOH GUARD
+        val remoteDns = if (MmkvManager.isCfForceDohEnabled()) {
+            listOf("https://1.1.1.1/dns-query", "https://cloudflare-dns.com/dns-query")
+        } else {
+            SettingsManager.getRemoteDnsServers()
+        }
         val domesticDns = SettingsManager.getDomesticDnsServers()
 
         remoteDns.forEach { servers.add(it) }
@@ -1101,16 +1105,39 @@ object CoreConfigManager {
     private fun convertProfile2Outbound(profileItem: ProfileItem): V2rayConfig.OutboundBean? {
         val outbound = CoreOutboundBuilder.convert(profileItem) ?: return null
 
-        // Injeksi otomatis MUX XUDP jika Mode Game Cloudflare diaktifkan
+        // FITUR 1: INJEKSI CLEAN IP JIKA ADA
+        val cleanIp = MmkvManager.getCfCleanIp().trim()
+        if (cleanIp.isNotEmpty()) {
+            outbound.settings?.vnext?.firstOrNull()?.address = cleanIp
+            outbound.settings?.servers?.firstOrNull()?.address = cleanIp
+        }
+
+        // FITUR UTAMA & FITUR 3: CLOUDFLARE TURBO & CUSTOM RELAY
         if (MmkvManager.isCfXudpEnabled()) {
-            if (outbound.mux == null) {
-                outbound.mux = V2rayConfig.OutboundBean.MuxBean(enabled = true)
+            // Hindari MUX bawaan client agar paket CMD_UDP standar langsung diterima worker
+            outbound.mux = null
+
+            // Hilangkan buffering soket untuk latency game instan
+            outbound.ensureSockopt().apply {
+                tcpNoDelay = true
             }
-            outbound.mux?.apply {
-                enabled = true
-                concurrency = 8
-                xudpConcurrency = 16
-                xudpProxyUDP443 = "allow"
+
+            // Injeksi Custom UDP Relay Target & 0-RTT Early Data (?ed=2048) ke path WebSocket
+            val currentPath = outbound.streamSettings?.wsSettings?.path
+            if (!currentPath.isNullOrBlank()) {
+                var newPath = currentPath
+                val customRelay = MmkvManager.getCfRelayHost().trim()
+                if (customRelay.isNotEmpty() && !newPath.contains(customRelay) && customRelay != "wsudprelay.up.railway.app:443") {
+                    val cleanRelay = customRelay.replace("https://", "").replace("http://", "").trimEnd('/')
+                    if (!newPath.contains("=")) {
+                        newPath = if (newPath.endsWith("/")) "$newPath$cleanRelay" else "$newPath/$cleanRelay"
+                    }
+                }
+                if (!newPath.contains("ed=")) {
+                    val separator = if (newPath.contains("?")) "&" else "?"
+                    newPath = "$newPath${separator}ed=2048"
+                }
+                outbound.streamSettings?.wsSettings?.path = newPath
             }
         }
 

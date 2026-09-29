@@ -71,7 +71,7 @@ enum class SettingsSubPage {
     VPN_PAGE,
     CORE_PAGE,
     ADVANCED_PAGE,
-    CLOUDFLARE_PAGE // Sub-halaman baru khusus Cloudflare
+    CLOUDFLARE_PAGE
 }
 
 class SettingsActivity : BaseComponentActivity() {
@@ -197,8 +197,13 @@ fun SettingsScreen(
     var realPingConcurrency by rememberMmkvString(AppConfig.PREF_REAL_PING_CONCURRENCY, "16")
     var ipApiUrl by rememberMmkvString(AppConfig.PREF_IP_API_URL, "")
 
-    // State untuk Cloudflare XUDP Game Mode
+    // State Pengaturan Cloudflare & Fitur Tambahan
     var cfXudpEnabled by rememberMmkvBool(MmkvManager.KEY_PREF_CF_XUDP, false)
+    var cfRelayHost by rememberMmkvString(MmkvManager.KEY_PREF_CF_RELAY_HOST, "wsudprelay.up.railway.app:443")
+    var cfForceDoh by rememberMmkvBool(MmkvManager.KEY_PREF_CF_FORCE_DOH, false)
+    var cfCleanIp by rememberMmkvString(MmkvManager.KEY_PREF_CF_CLEAN_IP, "")
+    var isScanningIp by remember { mutableStateOf(false) }
+    var scanStatusText by remember { mutableStateOf("") }
 
     val isVpn = mode == VPN
     val hevTunEnabled = isVpn && useHevTun
@@ -272,10 +277,10 @@ fun SettingsScreen(
             when (currentPage) {
                 SettingsSubPage.MAIN_MENU -> {
                     Column(modifier = Modifier.padding(14.dp)) {
-                        // KARTU BARU: CLOUDFLARE V2RAY SETTINGS
+                        // KARTU CLOUDFLARE V2RAY SETTINGS
                         SettingsCategoryCard(
                             title = "Cloudflare V2Ray Settings",
-                            subtitle = "Pengaturan XUDP Mux Relay khusus Cloudflare Worker",
+                            subtitle = "Clean IP Anycast, 0-RTT Early Data, dan UDP Relay",
                             onClick = { currentPage = SettingsSubPage.CLOUDFLARE_PAGE }
                         )
                         Spacer(modifier = Modifier.height(10.dp))
@@ -307,10 +312,70 @@ fun SettingsScreen(
 
                 SettingsSubPage.CLOUDFLARE_PAGE -> {
                     SettingsSwitchItem(
-                        title = "Mode Game (Multiplexing XUDP)",
-                        summary = "Mengemas paket UDP ke dalam frame Mux.Cool & XUDP agar sinkron dengan Cloudflare Worker & Railway UDP Relay.",
+                        title = "Cloudflare Turbo (0-RTT & Low Latency)",
+                        summary = "Mengaktifkan TCP NoDelay dan 0-RTT Early Data (?ed=2048) agar handshake instan dan UDP game lancar.",
                         checked = cfXudpEnabled,
                         onCheckedChange = { cfXudpEnabled = it }
+                    )
+
+                    SettingsSwitchItem(
+                        title = "Force Cloudflare DoH Guard",
+                        summary = "Memaksa resolusi DNS via 1.1.1.1 DoH resmi Cloudflare untuk memotong latency dan mencegah DNS leak.",
+                        checked = cfForceDoh,
+                        onCheckedChange = { cfForceDoh = it }
+                    )
+
+                    SettingsEditItem(
+                        title = "Custom UDP Relay Target",
+                        value = cfRelayHost,
+                        onValueChanged = { cfRelayHost = it }
+                    )
+
+                    SettingsEditItem(
+                        title = "Active Clean IP (Manual / Auto)",
+                        value = cfCleanIp,
+                        onValueChanged = { cfCleanIp = it }
+                    )
+
+                    SettingsMenuItem(
+                        title = if (isScanningIp) "Sedang Memindai Anycast IP..." else "⚡ Scan & Gunakan Clean IP Tercepat",
+                        subtitle = if (scanStatusText.isNotEmpty()) scanStatusText else "Uji latensi TCP 443 ke daftar Anycast Cloudflare dan pilih ping terendah",
+                        onClick = {
+                            if (!isScanningIp) {
+                                isScanningIp = true
+                                scanStatusText = "Menguji latensi TCP 443..."
+                                Thread {
+                                    val ipCandidates = listOf(
+                                        "104.16.132.229", "104.17.147.22", "104.18.21.226", "104.19.143.10",
+                                        "162.159.153.4", "172.67.74.152", "104.20.74.20", "104.24.110.15"
+                                    )
+                                    var bestIp = ""
+                                    var lowestPing = Long.MAX_VALUE
+
+                                    for (ip in ipCandidates) {
+                                        try {
+                                            val start = System.currentTimeMillis()
+                                            val socket = java.net.Socket()
+                                            socket.connect(java.net.InetSocketAddress(ip, 443), 500)
+                                            val latency = System.currentTimeMillis() - start
+                                            socket.close()
+                                            if (latency < lowestPing) {
+                                                lowestPing = latency
+                                                bestIp = ip
+                                            }
+                                        } catch (_: Exception) {}
+                                    }
+
+                                    isScanningIp = false
+                                    if (bestIp.isNotEmpty()) {
+                                        cfCleanIp = bestIp
+                                        scanStatusText = "IP Terpilih: $bestIp (${lowestPing} ms)"
+                                    } else {
+                                        scanStatusText = "Pemindaian gagal, periksa koneksi internet."
+                                    }
+                                }.start()
+                            }
+                        }
                     )
                 }
 
