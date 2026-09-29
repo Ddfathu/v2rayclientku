@@ -27,6 +27,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -43,13 +44,12 @@ import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-// PALET ELEGAN SOFT PINK / PUTIH BERSIH
-private val SoftBackground  = Color(0xFFFBF4F8) // Pink sangat lembut bersih (tidak hitam lagi)
-private val TopBarPurple    = Color(0xFF4A148C) // Ungu elegan di toolbar atas
-private val BarSurfaceColor = Color(0xFFFFFFFF) // Bottom bar putih bersih
-private val ActiveColor     = Color(0xFFD81B60) // Pink tua aktif
-private val InactiveColor   = Color(0xFF757575) // Abu-abu bersih
-private val PillActiveBg    = Color(0x22D81B60) // Kapsul sorotan lembut
+private val SoftBackground  = Color(0xFFFBF4F8)
+private val TopBarPurple    = Color(0xFF160B24)
+private val BarSurfaceColor = Color(0xFFFFFFFF)
+private val ActiveColor     = Color(0xFFD81B60)
+private val InactiveColor   = Color(0xFF757575)
+private val PillActiveBg    = Color(0x22D81B60)
 
 @Composable
 fun MainScreen(
@@ -208,7 +208,6 @@ fun MainScreen(
                         }
                     )
 
-                    // Sub Tabs Grup Kategori
                     if (groups.isNotEmpty() && currentBottomNav == 0) {
                         ScrollableTabRow(
                             selectedTabIndex = pagerState.currentPage.coerceIn(0, groups.lastIndex),
@@ -248,31 +247,67 @@ fun MainScreen(
                 }
             },
             bottomBar = {
-                Box {
-                    ModernBottomBar(
-                        currentTab = currentBottomNav,
-                        isRunning = isRunning,
-                        onTabSelected = { tabIndex -> currentBottomNav = tabIndex },
-                        onAddClicked = { showImportDropdown = true },
-                        onConnectToggle = { onAction(MainAction.ToggleService) },
-                        onOpenSettings = { onNavigate(MainDestination.Settings) }
-                    )
-
-                    DropdownMenu(
-                        expanded = showImportDropdown,
-                        onDismissRequest = { showImportDropdown = false },
-                        scrollState = importScrollState,
-                        containerColor = Color.White,
-                        modifier = Modifier
-                            .heightIn(max = maxMenuHeight)
-                            .verticalScrollbar(importScrollState)
-                    ) {
-                        ImportMenuContent(
-                            onAction = { action ->
-                                showImportDropdown = false
-                                onAction(action)
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    // BARIS INFORMASI & TOMBOL TEST REAL PING
+                    if (isRunning) {
+                        Surface(
+                            color = Color(0xFFF3E5F5),
+                            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onAction(MainAction.TestCurrentServer) }
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "⚡",
+                                    fontSize = 13.sp
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (displayText.isNotBlank()) displayText else "Klik untuk Tes Ping / Koneksi",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFF6A1B9A),
+                                    textAlign = TextAlign.Center
+                                )
                             }
+                        }
+                    }
+
+                    // BOTTOM NAVIGATION BAR
+                    Box {
+                        ModernBottomBar(
+                            currentTab = currentBottomNav,
+                            isRunning = isRunning,
+                            onTabSelected = { tabIndex -> currentBottomNav = tabIndex },
+                            onAddClicked = { showImportDropdown = true },
+                            onConnectToggle = { onAction(MainAction.ToggleService) },
+                            onOpenSettings = { onNavigate(MainDestination.Settings) }
                         )
+
+                        DropdownMenu(
+                            expanded = showImportDropdown,
+                            onDismissRequest = { showImportDropdown = false },
+                            scrollState = importScrollState,
+                            containerColor = Color.White,
+                            modifier = Modifier
+                                .heightIn(max = maxMenuHeight)
+                                .verticalScrollbar(importScrollState)
+                        ) {
+                            ImportMenuContent(
+                                onAction = { action ->
+                                    showImportDropdown = false
+                                    onAction(action)
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -339,7 +374,6 @@ private fun ModernBottomBar(
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 1. Config
                 BottomNavItem(
                     iconRes = R.drawable.ic_file_24dp,
                     label = "Config",
@@ -347,7 +381,6 @@ private fun ModernBottomBar(
                     onClick = { onTabSelected(0) }
                 )
 
-                // 2. Tambah
                 BottomNavItem(
                     iconRes = R.drawable.ic_add_24dp,
                     label = "Tambah",
@@ -355,7 +388,6 @@ private fun ModernBottomBar(
                     onClick = onAddClicked
                 )
 
-                // 3. Tombol Tengah START / STOP
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(24.dp))
@@ -381,7 +413,6 @@ private fun ModernBottomBar(
                     }
                 }
 
-                // 4. Live Log
                 BottomNavItem(
                     iconRes = R.drawable.ic_logcat_24dp,
                     label = "Live Log",
@@ -389,7 +420,6 @@ private fun ModernBottomBar(
                     onClick = { onTabSelected(1) }
                 )
 
-                // 5. Setelan
                 BottomNavItem(
                     iconRes = R.drawable.ic_settings_24dp,
                     label = "Setelan",

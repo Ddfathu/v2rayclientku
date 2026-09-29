@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.sp
 import com.v2ray.ang.R
 import com.v2ray.ang.ui.compose.verticalScrollbar
 
-private val TopBarBgDark = Color(0xFF160B24) // Ungu sangat pekat solid
+private val TopBarBgDark = Color(0xFF160B24) // Ungu pekat elegan
 private val ContentWhite = Color(0xFFFFFFFF) // Putih terang kontras
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,6 +76,7 @@ fun MainTopBar(
             actionIconContentColor = ContentWhite
         ),
         actions = {
+            // Tombol Petir TCPing
             IconButton(onClick = { onAction(MainAction.TestAllServers) }) {
                 Icon(
                     painter = painterResource(R.drawable.ic_stat_name),
@@ -84,6 +85,7 @@ fun MainTopBar(
                 )
             }
 
+            // Tombol Pencarian
             IconButton(onClick = { onSearchToggle(true) }) {
                 Icon(
                     painter = painterResource(R.drawable.ic_search_24dp),
@@ -92,6 +94,7 @@ fun MainTopBar(
                 )
             }
 
+            // Menu Tambah / Import (+)
             Box(modifier = Modifier.wrapContentSize(Alignment.TopEnd)) {
                 IconButton(onClick = { showImportMenu = true }) {
                     Icon(
@@ -104,7 +107,7 @@ fun MainTopBar(
                     expanded = showImportMenu,
                     onDismissRequest = { showImportMenu = false },
                     scrollState = importMenuScrollState,
-                    containerColor = Color(0xFF26143D),
+                    containerColor = Color.White, // Latar putih bersih agar teks item kontras terlihat
                     modifier = Modifier
                         .heightIn(max = maxMenuHeight)
                         .verticalScrollbar(importMenuScrollState)
@@ -118,6 +121,7 @@ fun MainTopBar(
                 }
             }
 
+            // Menu Titik Tiga
             Box(modifier = Modifier.wrapContentSize(Alignment.TopEnd)) {
                 IconButton(onClick = { showMenu = true }) {
                     Icon(
@@ -130,7 +134,7 @@ fun MainTopBar(
                     expanded = showMenu,
                     onDismissRequest = { showMenu = false },
                     scrollState = moreMenuScrollState,
-                    containerColor = Color(0xFF26143D),
+                    containerColor = Color.White, // Latar putih bersih agar teks item kontras terlihat
                     modifier = Modifier
                         .heightIn(max = maxMenuHeight)
                         .verticalScrollbar(moreMenuScrollState)
