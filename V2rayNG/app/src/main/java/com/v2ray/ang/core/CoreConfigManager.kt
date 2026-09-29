@@ -1103,24 +1103,20 @@ object CoreConfigManager {
      * Convert one profile object into one outbound object.
      */
     private fun convertProfile2Outbound(profileItem: ProfileItem): V2rayConfig.OutboundBean? {
-        val outbound = CoreOutboundBuilder.convert(profileItem) ?: return null
-
-        // FITUR 1: INJEKSI CLEAN IP JIKA ADA
+        // FITUR 1: Jika ada Clean IP aktif, ganti alamat server profil sebelum konversi
         val cleanIp = MmkvManager.getCfCleanIp().trim()
-        if (cleanIp.isNotEmpty()) {
-            outbound.settings?.vnext?.firstOrNull()?.address = cleanIp
-            outbound.settings?.servers?.firstOrNull()?.address = cleanIp
+        val targetProfile = if (cleanIp.isNotEmpty()) {
+            profileItem.copy(server = cleanIp)
+        } else {
+            profileItem
         }
+
+        val outbound = CoreOutboundBuilder.convert(targetProfile) ?: return null
 
         // FITUR UTAMA & FITUR 3: CLOUDFLARE TURBO & CUSTOM RELAY
         if (MmkvManager.isCfXudpEnabled()) {
             // Hindari MUX bawaan client agar paket CMD_UDP standar langsung diterima worker
             outbound.mux = null
-
-            // Hilangkan buffering soket untuk latency game instan
-            outbound.ensureSockopt().apply {
-                tcpNoDelay = true
-            }
 
             // Injeksi Custom UDP Relay Target & 0-RTT Early Data (?ed=2048) ke path WebSocket
             val currentPath = outbound.streamSettings?.wsSettings?.path
