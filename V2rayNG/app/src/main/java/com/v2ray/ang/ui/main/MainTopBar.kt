@@ -1,10 +1,15 @@
 package com.v2ray.ang.ui.main
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,6 +17,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -33,8 +39,10 @@ import androidx.compose.ui.unit.sp
 import com.v2ray.ang.R
 import com.v2ray.ang.ui.compose.verticalScrollbar
 
-private val TopBarBgDark = Color(0xFF160B24) // Ungu gelap pekat
-private val ContentWhite = Color(0xFFFFFFFF) // Putih kontras terang
+private val TopBarBgDark  = Color(0xFF160B24) // Ungu gelap pekat
+private val ContentWhite  = Color(0xFFFFFFFF) // Putih terang
+private val MenuPillColor = Color(0xFF2C1647) // Warna card tombol menu
+private val MenuBorder    = Color(0xFF4A2574) // Garis luar tombol menu
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,33 +57,44 @@ fun MainTopBar(
     onAction: (MainAction) -> Unit,
     onMoreMenuAction: (MainMoreMenuAction) -> Unit
 ) {
-    var showImportMenu by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
-    val importMenuScrollState = rememberScrollState()
     val moreMenuScrollState = rememberScrollState()
     val maxMenuHeight = (LocalConfiguration.current.screenHeightDp.dp * 0.7f)
 
     TopAppBar(
         title = {
-            // Tulisan "Config" dikosongkan/dihapus
+            // Judul kosong / clean
         },
         navigationIcon = {
-            // Garis tiga diganti tombol teks "MENU"
-            Box(
+            // Tombol MENU gaya KARTU / CHIP PILIH
+            Surface(
                 modifier = Modifier
                     .padding(start = 12.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { onMenuClick() }
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
-                contentAlignment = Alignment.Center
+                    .clip(RoundedCornerShape(20.dp))
+                    .clickable { onMenuClick() },
+                color = MenuPillColor,
+                border = BorderStroke(1.dp, MenuBorder),
+                shape = RoundedCornerShape(20.dp)
             ) {
-                Text(
-                    text = "MENU",
-                    color = ContentWhite,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 15.sp,
-                    letterSpacing = 1.sp
-                )
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_menu_24dp),
+                        contentDescription = "Menu",
+                        tint = ContentWhite,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "MENU",
+                        color = ContentWhite,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        letterSpacing = 0.5.sp
+                    )
+                }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
@@ -85,42 +104,13 @@ fun MainTopBar(
             actionIconContentColor = ContentWhite
         ),
         actions = {
-            // Tombol "V" kuning sudah dihapus
-
-            // Tombol Pencarian
+            // Tombol Search
             IconButton(onClick = { onSearchToggle(true) }) {
                 Icon(
                     painter = painterResource(R.drawable.ic_search_24dp),
                     contentDescription = stringResource(R.string.acc_search),
                     tint = ContentWhite
                 )
-            }
-
-            // Tombol Tambah / Import (+)
-            Box(modifier = Modifier.wrapContentSize(Alignment.TopEnd)) {
-                IconButton(onClick = { showImportMenu = true }) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_add_24dp),
-                        contentDescription = stringResource(R.string.acc_add),
-                        tint = ContentWhite
-                    )
-                }
-                DropdownMenu(
-                    expanded = showImportMenu,
-                    onDismissRequest = { showImportMenu = false },
-                    scrollState = importMenuScrollState,
-                    containerColor = Color.White,
-                    modifier = Modifier
-                        .heightIn(max = maxMenuHeight)
-                        .verticalScrollbar(importMenuScrollState)
-                ) {
-                    ImportMenuContent(
-                        onAction = { action ->
-                            showImportMenu = false
-                            onAction(action)
-                        }
-                    )
-                }
             }
 
             // Tombol Menu Titik Tiga
@@ -150,4 +140,3 @@ fun MainTopBar(
         }
     )
 }
- 

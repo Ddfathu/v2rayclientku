@@ -483,9 +483,7 @@ object CoreConfigManager {
             ?: error("Failed to parse config template")
     }
 
-
     //endregion
-
 
     //region some sub function
 
@@ -719,148 +717,6 @@ object CoreConfigManager {
         }
     }
 
-    /*
-    /**
-     * Configure DNS servers, hosts, and DNS routing rules.
-     */
-    private fun configureDns(
-        v2rayConfig: V2rayConfig,
-        policyGroupBalancerTags: Map<String, String>,
-    ) {
-        val hosts = mutableMapOf<String, Any>()
-        val servers = ArrayList<Any>()
-
-        //remote Dns
-        val remoteDns = SettingsManager.getRemoteDnsServers()
-        val proxyDomain = (collectUserRuleDomainsByTag(AppConfig.TAG_PROXY) + collectCustomOutboundDomains()).distinct()
-        remoteDns.forEach {
-            servers.add(it)
-        }
-        if (proxyDomain.isNotEmpty()) {
-            servers.add(
-                V2rayConfig.DnsBean.ServersBean(
-                    address = remoteDns.first(),
-                    domains = proxyDomain,
-                )
-            )
-        }
-
-        // domestic DNS
-        val domesticDns = SettingsManager.getDomesticDnsServers()
-        val directDomain = collectUserRuleDomainsByTag(AppConfig.TAG_DIRECT)
-        val isCnRoutingMode = directDomain.contains(AppConfig.GEOSITE_CN)
-        val cnRegionFilter = { domain: String ->
-            domain.startsWith("geosite:") && (domain.endsWith("-cn") || domain.endsWith("@cn"))
-                    || domain == AppConfig.GEOSITE_CN
-        }
-        val finalDirectDomain = if (isCnRoutingMode) directDomain.filterNot {
-            cnRegionFilter(it)
-        } else directDomain
-        val domesticDnsTags = mutableListOf<String>()
-        domesticDns.forEachIndexed { index, element ->
-            val tag = AppConfig.TAG_DOMESTIC_DNS + index
-            servers.add(
-                V2rayConfig.DnsBean.ServersBean(
-                    address = element,
-                    domains = finalDirectDomain,
-                    skipFallback = true,
-                    tag = tag
-                )
-            )
-            domesticDnsTags.add(tag)
-        }
-        if (isCnRoutingMode) {
-            val geoipCn = arrayListOf(AppConfig.GEOIP_CN)
-            val cnRegionDomain = directDomain.filter { cnRegionFilter(it) }
-            domesticDns.forEachIndexed { index, element ->
-                val geositeCnDnsTag = AppConfig.TAG_DOMESTIC_DNS + index + "_cn_expect"
-                servers.add(
-                    V2rayConfig.DnsBean.ServersBean(
-                        address = element,
-                        domains = cnRegionDomain,
-                        expectIPs = geoipCn,
-                        skipFallback = true,
-                        tag = geositeCnDnsTag
-                    )
-                )
-                domesticDnsTags.add(geositeCnDnsTag)
-            }
-        }
-
-        //block dns
-        val blkDomain = collectUserRuleDomainsByTag(AppConfig.TAG_BLOCKED)
-        if (blkDomain.isNotEmpty()) {
-            hosts.putAll(blkDomain.map { it to AppConfig.LOOPBACK })
-        }
-
-        // hardcode googleapi rule to fix play store problems
-        hosts[AppConfig.GOOGLEAPIS_CN_DOMAIN] = AppConfig.GOOGLEAPIS_COM_DOMAIN
-
-        // hardcode popular Android Private DNS rule to fix localhost DNS problem
-        hosts[AppConfig.DNS_ALIDNS_DOMAIN] = AppConfig.DNS_ALIDNS_ADDRESSES
-        hosts[AppConfig.DNS_CISCO_SSE_DOMAIN] = AppConfig.DNS_CISCO_SSE_ADDRESSES
-        hosts[AppConfig.DNS_CISCO_UMBRELLA_DOMAIN] = AppConfig.DNS_CISCO_UMBRELLA_ADDRESSES
-        hosts[AppConfig.DNS_CLOUDFLARE_ONE_DOMAIN] = AppConfig.DNS_CLOUDFLARE_ONE_ADDRESSES
-        hosts[AppConfig.DNS_CLOUDFLARE_ONEDOT_DNS_DOMAIN] = AppConfig.DNS_CLOUDFLARE_ONEDOT_DNS_ADDRESSES
-        hosts[AppConfig.DNS_CLOUDFLARE_DNS_COM_DOMAIN] = AppConfig.DNS_CLOUDFLARE_DNS_COM_ADDRESSES
-        hosts[AppConfig.DNS_CLOUDFLARE_DNS_DOMAIN] = AppConfig.DNS_CLOUDFLARE_DNS_ADDRESSES
-        hosts[AppConfig.DNS_CLOUDFLARE_WARP_DOMAIN] = AppConfig.DNS_CLOUDFLARE_WARP_ADDRESSES
-        hosts[AppConfig.DNS_DNSPOD_DOH_DOMAIN] = AppConfig.DNS_DNSPOD_DOH_ADDRESSES
-        hosts[AppConfig.DNS_DNSPOD_DOT_DOMAIN] = AppConfig.DNS_DNSPOD_DOT_ADDRESSES
-        hosts[AppConfig.DNS_GOOGLE_DOMAIN] = AppConfig.DNS_GOOGLE_ADDRESSES
-        hosts[AppConfig.DNS_QUAD9_DOMAIN] = AppConfig.DNS_QUAD9_ADDRESSES
-        hosts[AppConfig.DNS_SB_DOMAIN] = AppConfig.DNS_SB_ADDRESSES
-        hosts[AppConfig.DNS_YANDEX_DOMAIN] = AppConfig.DNS_YANDEX_ADDRESSES
-
-        //User DNS hosts
-        val userHosts = MmkvManager.decodeSettingsString(AppConfig.PREF_DNS_HOSTS)
-        if (userHosts.isNotNullEmpty()) {
-            val userHostsMap = userHosts?.split(",")
-                ?.filter { it.isNotEmpty() }
-                ?.filter { it.contains(":") }
-                ?.associate { it.split(":").let { (k, v) -> k to v } }
-            if (userHostsMap != null) {
-                hosts.putAll(userHostsMap)
-            }
-        }
-
-        // DNS dns
-        v2rayConfig.dns = V2rayConfig.DnsBean(
-            servers = servers,
-            hosts = hosts,
-            tag = AppConfig.TAG_DNS,
-            enableParallelQuery = if ((domesticDns.size + remoteDns.size) > 2) true else null
-        )
-
-        // DNS routing
-        v2rayConfig.routing.rules.add(
-            V2rayConfig.RoutingBean.RulesBean(
-                outboundTag = AppConfig.TAG_DIRECT,
-                inboundTag = domesticDnsTags,
-                domain = null
-            )
-        )
-        val dnsProxyBalancerTag = policyGroupBalancerTags[AppConfig.TAG_PROXY]
-        if (dnsProxyBalancerTag != null) {
-            v2rayConfig.routing.rules.add(
-                V2rayConfig.RoutingBean.RulesBean(
-                    balancerTag = dnsProxyBalancerTag,
-                    inboundTag = arrayListOf(AppConfig.TAG_DNS),
-                    domain = null
-                )
-            )
-        } else {
-            v2rayConfig.routing.rules.add(
-                V2rayConfig.RoutingBean.RulesBean(
-                    outboundTag = AppConfig.TAG_PROXY,
-                    inboundTag = arrayListOf(AppConfig.TAG_DNS),
-                    domain = null
-                )
-            )
-        }
-    }
-    */
-
     /**
      * Configure DNS servers, hosts, and DNS routing rules.
      */
@@ -955,9 +811,6 @@ object CoreConfigManager {
             val userHostsMap = userHosts?.split(",").orEmpty()
                 .filter { it.isNotBlank() && it.contains(":") }
                 .associate {
-                    // Use limit = 2 to split only at the first colon.
-                    // This ensures that IPv6 addresses (which contain multiple colons)
-                    // are preserved entirely in the second part.
                     val parts = it.split(":", limit = 2)
                     parts[0].trim() to parts[1].trim()
                 }
@@ -1050,9 +903,7 @@ object CoreConfigManager {
 
     //endregion
 
-
     //region outbound related functions
-
 
     /**
      * Resolve outbound domains to IPs and write resolved hosts to DNS map.
@@ -1106,14 +957,27 @@ object CoreConfigManager {
      * Convert one profile object into one outbound object.
      */
     private fun convertProfile2Outbound(profileItem: ProfileItem): V2rayConfig.OutboundBean? {
-        return CoreOutboundBuilder.convert(profileItem)
+        val outbound = CoreOutboundBuilder.convert(profileItem) ?: return null
+
+        // Injeksi otomatis MUX XUDP jika Mode Game Cloudflare diaktifkan
+        if (MmkvManager.isCfXudpEnabled()) {
+            if (outbound.mux == null) {
+                outbound.mux = V2rayConfig.OutboundBean.MuxBean()
+            }
+            outbound.mux?.apply {
+                enabled = true
+                concurrency = 8
+                xudpConcurrency = 16
+                xudpProxyUDP443 = "allow"
+            }
+        }
+
+        return outbound
     }
 
     //endregion
 
-
     //region routing related functions
-
 
     /**
      * Merge probe settings from all balancer strategies into the runtime config.
@@ -1226,7 +1090,6 @@ object CoreConfigManager {
 
         v2rayConfig.routing.rules.add(rule)
     }
-
 
     /**
      * Build balancer and probe settings from one policy-group strategy value.

@@ -70,7 +70,8 @@ enum class SettingsSubPage {
     UI_PAGE,
     VPN_PAGE,
     CORE_PAGE,
-    ADVANCED_PAGE
+    ADVANCED_PAGE,
+    CLOUDFLARE_PAGE // Sub-halaman baru khusus Cloudflare
 }
 
 class SettingsActivity : BaseComponentActivity() {
@@ -196,6 +197,9 @@ fun SettingsScreen(
     var realPingConcurrency by rememberMmkvString(AppConfig.PREF_REAL_PING_CONCURRENCY, "16")
     var ipApiUrl by rememberMmkvString(AppConfig.PREF_IP_API_URL, "")
 
+    // State untuk Cloudflare XUDP Game Mode
+    var cfXudpEnabled by rememberMmkvBool(MmkvManager.KEY_PREF_CF_XUDP, false)
+
     val isVpn = mode == VPN
     val hevTunEnabled = isVpn && useHevTun
     val localProxyForced = hevTunEnabled
@@ -239,6 +243,7 @@ fun SettingsScreen(
         SettingsSubPage.VPN_PAGE -> stringResource(R.string.title_vpn_settings)
         SettingsSubPage.CORE_PAGE -> stringResource(R.string.title_core_settings)
         SettingsSubPage.ADVANCED_PAGE -> stringResource(R.string.title_advanced)
+        SettingsSubPage.CLOUDFLARE_PAGE -> "Cloudflare V2Ray Settings"
     }
 
     Scaffold(
@@ -267,6 +272,13 @@ fun SettingsScreen(
             when (currentPage) {
                 SettingsSubPage.MAIN_MENU -> {
                     Column(modifier = Modifier.padding(14.dp)) {
+                        // KARTU BARU: CLOUDFLARE V2RAY SETTINGS
+                        SettingsCategoryCard(
+                            title = "Cloudflare V2Ray Settings",
+                            subtitle = "Pengaturan XUDP Mux Relay khusus Cloudflare Worker",
+                            onClick = { currentPage = SettingsSubPage.CLOUDFLARE_PAGE }
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
                         SettingsCategoryCard(
                             title = stringResource(R.string.title_ui_settings),
                             subtitle = "Tema, mode malam, bahasa, dan tata letak",
@@ -291,6 +303,15 @@ fun SettingsScreen(
                             onClick = { currentPage = SettingsSubPage.ADVANCED_PAGE }
                         )
                     }
+                }
+
+                SettingsSubPage.CLOUDFLARE_PAGE -> {
+                    SettingsSwitchItem(
+                        title = "Mode Game (Multiplexing XUDP)",
+                        summary = "Mengemas paket UDP ke dalam frame Mux.Cool & XUDP agar sinkron dengan Cloudflare Worker & Railway UDP Relay.",
+                        checked = cfXudpEnabled,
+                        onCheckedChange = { cfXudpEnabled = it }
+                    )
                 }
 
                 SettingsSubPage.UI_PAGE -> {
