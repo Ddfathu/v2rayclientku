@@ -35,6 +35,10 @@ import kotlinx.coroutines.flow.drop
 internal class ProfileStorageException(message: String) : IllegalStateException(message)
 
 object MmkvManager {
+    const val KEY_PREF_FAKE_DNS_FILTER = "pref_fake_dns_filter"
+    const val KEY_PREF_AUTO_PING_ENABLED = "pref_auto_ping_enabled"
+    const val KEY_PREF_AUTO_PING_URL = "pref_auto_ping_url"
+    const val KEY_PREF_AUTO_PING_INTERVAL = "pref_auto_ping_interval"
 
     //region private
 

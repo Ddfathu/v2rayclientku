@@ -2,8 +2,6 @@ package com.v2ray.ang.ui.main
 
 
 import com.v2ray.ang.handler.MmkvManager
-import com.v2ray.ang.util.SpeedtestUtil
-import kotlinx.coroutines.isActive
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -965,23 +963,22 @@ class MainViewModel(
 
     private var autoPingJob: kotlinx.coroutines.Job? = null
 
+    private var autoPingJob: kotlinx.coroutines.Job? = null
+
     private fun checkAndManageAutoPing(isRunning: Boolean) {
         autoPingJob?.cancel()
         autoPingJob = null
 
         autoPingJob = viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            val interval = MmkvManager.getAutoPingInterval() * 1000L
-            val testUrl = MmkvManager.getAutoPingUrl()
+            val interval = 3000L
             while (kotlinx.coroutines.isActive) {
                 kotlinx.coroutines.delay(interval)
-                val currentGuid = MmkvManager.getSelectServer() ?: continue
                 try {
-                    val delay = SpeedtestUtil.realPing(currentGuid, testUrl)
-                    MmkvManager.encodeServerTestDelayMillis(currentGuid, delay)
-                    // updated delay in MMKV
+                    testCurrentServerRealPing()
                 } catch (_: Exception) {}
             }
         }
     }
+    }
 
-}
+
