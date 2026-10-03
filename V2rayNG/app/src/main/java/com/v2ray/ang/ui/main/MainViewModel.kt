@@ -152,8 +152,14 @@ class MainViewModel(
 
             MainServiceEvent.StateStopSuccess -> updateRunningState(false)
             is MainServiceEvent.MeasureDelayResult -> {
-                if (!uiState.value.isRunning || !testRequests.completeCurrent(event.requestId)) return
                 _uiState.update { it.copy(isTesting = testRequests.isTesting, status = MainStatus.ConnectionTest(event.result)) }
+
+                val sdf = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
+                val timeStr = sdf.format(java.util.Date())
+                val delayVal = event.result.delayMillis
+                val logMsg = if (delayVal > 0) "Connected" else (event.result.errorMessage.ifBlank { "Timeout" })
+                val newEntry = PingLogItem(timeStr, delayVal, logMsg)
+                _pingLogs.value = (_pingLogs.value + newEntry).takeLast(20)
             }
 
             is MainServiceEvent.MeasureConfigSuccess -> {
@@ -980,17 +986,9 @@ class MainViewModel(
             while (isActive) {
                 val isEnabled = MmkvManager.decodeSettingsBool(MmkvManager.KEY_PREF_AUTO_PING_ENABLED, false)
                 if (isEnabled) {
-                    val startTime = System.currentTimeMillis()
-                    val timeStr = sdf.format(java.util.Date())
                     try {
                         testCurrentServerRealPing()
-                        val elapsed = System.currentTimeMillis() - startTime
-                        val newEntry = PingLogItem(timeStr, elapsed, "Connected: ms")
-                        _pingLogs.value = (_pingLogs.value + newEntry).takeLast(20)
-                    } catch (e: Exception) {
-                        val newEntry = PingLogItem(timeStr, -1L, "Timeout / Error")
-                        _pingLogs.value = (_pingLogs.value + newEntry).takeLast(20)
-                    }
+                    } catch (_: Exception) {}
                 }
                 kotlinx.coroutines.delay(2500L)
             }
