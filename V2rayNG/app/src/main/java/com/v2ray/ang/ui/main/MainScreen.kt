@@ -1,4 +1,5 @@
 package com.v2ray.ang.ui.main
+import androidx.compose.foundation.BorderStroke
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -248,35 +249,75 @@ fun MainScreen(
             },
             bottomBar = {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    // BARIS INFORMASI & TOMBOL TEST REAL PING
+                                        // CONSOLE PING ALA DARKTUNNEL
                     if (isRunning) {
+                        val pingLogs by mainViewModel.pingLogs.collectAsStateWithLifecycle()
+                        val consoleListState = rememberLazyListState()
+
+                        LaunchedEffect(pingLogs.size) {
+                            if (pingLogs.isNotEmpty()) {
+                                consoleListState.animateScrollToItem(pingLogs.size - 1)
+                            }
+                        }
+
                         Surface(
-                            color = Color(0xFFF3E5F5),
-                            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+                            color = Color(0xFF10091D),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, Color(0xFF332047)),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { onAction(MainAction.TestCurrentServer) }
-                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                                .height(140.dp)
+                                .padding(horizontal = 12.dp, vertical = 4.dp)
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 12.dp, vertical = 6.dp),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "⚡",
-                                    fontSize = 13.sp
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = if (displayText.isNotBlank()) displayText else "Klik untuk Tes Ping / Koneksi",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = Color(0xFF6A1B9A),
-                                    textAlign = TextAlign.Center
-                                )
+                            if (pingLogs.isEmpty()) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "[LOG] Menunggu auto-ping...",
+                                        color = Color(0xFF7E728F),
+                                        fontSize = 11.sp,
+                                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                                    )
+                                }
+                            } else {
+                                LazyColumn(
+                                    state = consoleListState,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    items(pingLogs) { item ->
+                                        val logColor = when {
+                                            item.delay < 0L -> Color(0xFFFF5252) // Merah (RTO/Gagal)
+                                            item.delay < 150L -> Color(0xFF00E676) // Hijau (Ping Bagus)
+                                            item.delay < 350L -> Color(0xFFFFD600) // Kuning (Sedang)
+                                            else -> Color(0xFFFF5252) // Merah (Tinggi)
+                                        }
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth().padding(vertical = 1.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = "[${item.time}] ${item.msg}",
+                                                color = logColor,
+                                                fontSize = 11.sp,
+                                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                                            )
+                                            if (item.delay >= 0L) {
+                                                Text(
+                                                    text = "${item.delay} ms",
+                                                    color = logColor,
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

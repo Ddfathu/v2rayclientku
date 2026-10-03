@@ -1,5 +1,7 @@
 package com.v2ray.ang.ui.main
 
+data class PingLogItem(val time: String, val delay: Long, val msg: String)
+
 import kotlinx.coroutines.isActive
 
 
@@ -964,21 +966,33 @@ class MainViewModel(
         const val TEST_RESULT_FLUSH_INTERVAL_MS = 500L
     }
 
-        private var autoPingJob: kotlinx.coroutines.Job? = null
+            private val _pingLogs = kotlinx.coroutines.flow.MutableStateFlow<List<PingLogItem>>(emptyList())
+    val pingLogs: kotlinx.coroutines.flow.StateFlow<List<PingLogItem>> = _pingLogs
+
+    private var autoPingJob: kotlinx.coroutines.Job? = null
 
     fun checkAndManageAutoPing(isRunning: Boolean) {
         autoPingJob?.cancel()
         autoPingJob = null
 
         autoPingJob = viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            val sdf = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
             while (isActive) {
                 val isEnabled = MmkvManager.decodeSettingsBool(MmkvManager.KEY_PREF_AUTO_PING_ENABLED, false)
                 if (isEnabled) {
+                    val startTime = System.currentTimeMillis()
+                    val timeStr = sdf.format(java.util.Date())
                     try {
                         testCurrentServerRealPing()
-                    } catch (e: Exception) {}
+                        val elapsed = System.currentTimeMillis() - startTime
+                        val newEntry = PingLogItem(timeStr, elapsed, "Connected: ms")
+                        _pingLogs.value = (_pingLogs.value + newEntry).takeLast(20)
+                    } catch (e: Exception) {
+                        val newEntry = PingLogItem(timeStr, -1L, "Timeout / Error")
+                        _pingLogs.value = (_pingLogs.value + newEntry).takeLast(20)
+                    }
                 }
-                kotlinx.coroutines.delay(3000L)
+                kotlinx.coroutines.delay(2500L)
             }
         }
     }
