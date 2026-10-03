@@ -117,6 +117,7 @@ class MainViewModel(
 
     // ---------- Service events ----------
     init {
+        checkAndManageAutoPing(true)
         collectServiceEvents()
         setupGroupTab()
     }
@@ -963,23 +964,22 @@ class MainViewModel(
         const val TEST_RESULT_FLUSH_INTERVAL_MS = 500L
     }
 
-    private var autoPingJob: kotlinx.coroutines.Job? = null
+        private var autoPingJob: kotlinx.coroutines.Job? = null
 
-
-    private fun checkAndManageAutoPing(isRunning: Boolean) {
+    fun checkAndManageAutoPing(isRunning: Boolean) {
         autoPingJob?.cancel()
         autoPingJob = null
 
         autoPingJob = viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            val interval = 3000L
             while (isActive) {
-                kotlinx.coroutines.delay(interval)
-                try {
-                    testCurrentServerRealPing()
-                } catch (e: Exception) {}
+                val isEnabled = MmkvManager.decodeSettingsBool(MmkvManager.KEY_PREF_AUTO_PING_ENABLED, false)
+                if (isEnabled) {
+                    try {
+                        testCurrentServerRealPing()
+                    } catch (e: Exception) {}
+                }
+                kotlinx.coroutines.delay(3000L)
             }
         }
     }
-    }
-
-
+}

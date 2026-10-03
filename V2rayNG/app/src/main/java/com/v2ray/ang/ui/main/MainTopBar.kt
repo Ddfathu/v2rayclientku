@@ -121,7 +121,27 @@ fun MainTopBar(
             actionIconContentColor = ContentWhite
         ),
         actions = {
-            // 1. Text Badge Toggle Auto-Ping (Aman 100% tanpa drawable eksternal)
+            // Tombol Quick-Import / Paste Clipboard
+            Surface(
+                modifier = Modifier
+                    .padding(end = 4.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable {
+                        onAction(MainAction.ImportClipboard)
+                    },
+                color = Color(0xFF7B1FA2),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = "PASTE",
+                    color = ContentWhite,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 10.sp,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
+                )
+            }
+
+            // Tombol Toggle Auto-Ping
             Surface(
                 modifier = Modifier
                     .padding(end = 4.dp)
@@ -141,11 +161,11 @@ fun MainTopBar(
                     color = ContentWhite,
                     fontWeight = FontWeight.Bold,
                     fontSize = 10.sp,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
                 )
             }
 
-            // 2. Tombol Search
+            // Tombol Search
             IconButton(onClick = { onSearchToggle(true) }) {
                 Icon(
                     painter = painterResource(R.drawable.ic_search_24dp),
@@ -154,7 +174,7 @@ fun MainTopBar(
                 )
             }
 
-            // 3. Dropdown Menu
+            // More Menu
             Box(modifier = Modifier.wrapContentSize(Alignment.TopEnd)) {
                 IconButton(onClick = { showMenu = true }) {
                     Icon(

@@ -53,36 +53,32 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleFdroidDebug --no-daemon
 
-      - name: Sign APKs Permanently
+      - name: Sign APK Permanently (arm64-v8a only)
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          # Siapkan file keystore dari secrets
           echo "$KEYSTORE_BASE64" | base64 -d > release.keystore
-
-          # Cari tool apksigner bawaan Android build-tools
           BUILD_TOOLS_VERSION=$(ls $ANDROID_HOME/build-tools | tail -n 1)
           APKSIGNER="$ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/apksigner"
 
-          # Sign ulang setiap file APK output agar signature permanen
-          for apk in ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/fdroid/debug/*.apk; do
-            echo "Signing $apk..."
-            $APKSIGNER sign --ks release.keystore \
-              --ks-pass pass:"$KEYSTORE_PASSWORD" \
-              --ks-key-alias "$KEY_ALIAS" \
-              --key-pass pass:"$KEY_PASSWORD" \
-              "$apk"
+          for apk in ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/fdroid/debug/*arm64-v8a*.apk; do
+            if [ -f "$apk" ]; then
+              echo "Signing $apk..."
+              $APKSIGNER sign --ks release.keystore \
+                --ks-pass pass:"$KEYSTORE_PASSWORD" \
+                --ks-key-alias "$KEY_ALIAS" \
+                --key-pass pass:"$KEY_PASSWORD" \
+                "$apk"
+            fi
           done
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: dfathuv2ray-APK
-          path: |
-            ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/fdroid/debug/*arm64-v8a*.apk
-            ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/fdroid/debug/*armeabi-v7a*.apk
+          name: dfathuv2ray-arm64-v8a
+          path: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/fdroid/debug/*arm64-v8a*.apk
           retention-days: 7
