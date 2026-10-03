@@ -589,7 +589,7 @@ object CoreOutboundBuilder {
             streamSettings.tlsSettings = tlsSetting
             streamSettings.realitySettings = null
         } else if (streamSettings.security == AppConfig.REALITY) {
-            tlsSetting.allowInsecure = null
+            tlsSetting.allowInsecure = false
             streamSettings.tlsSettings = null
             streamSettings.realitySettings = tlsSetting
         }
