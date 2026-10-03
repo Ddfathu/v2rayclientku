@@ -269,8 +269,7 @@ object CoreConfigManager {
                 password = MmkvManager.getChainRelayUuid(),
                 security = "tls",
                 network = "ws",
-                remarks = "Universal Relay",
-                subid = ""
+                remarks = "Universal Relay"
             )
             val chainOutbound = CoreOutboundBuilder.convert(relayProfile)
             if (chainOutbound != null) {
@@ -578,11 +577,10 @@ object CoreConfigManager {
                     0, V2rayConfig.RoutingBean.RulesBean(
                         inboundTag = arrayListOf("tun"),
                         outboundTag = "dns-out",
-                        port = "53",
+                        port = "53"
                     )
                 )
             }
-        }
 
         if (v2rayConfig.outbounds.none { e -> e.protocol == "dns" && e.tag == "dns-out" }) {
             v2rayConfig.outbounds.add(
@@ -1023,4 +1021,4 @@ object CoreConfigManager {
     )
 
     //endregion
-
+}

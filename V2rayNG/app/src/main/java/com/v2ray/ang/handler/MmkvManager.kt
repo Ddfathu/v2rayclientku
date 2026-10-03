@@ -56,9 +56,6 @@ object MmkvManager {
     private const val KEY_WEBDAV_CONFIG = "WEBDAV_CONFIG"
 
     // KEY KHUSUS CUSTOM DOH & UDP RELAY (DEFAULT OFF)
-        const val KEY_PREF_AUTO_PING_ENABLED = "pref_auto_ping_enabled"
-    const val KEY_PREF_AUTO_PING_URL = "pref_auto_ping_url"
-    const val KEY_PREF_AUTO_PING_INTERVAL = "pref_auto_ping_interval"
     const val KEY_PREF_ENABLE_DOH = "pref_enable_custom_doh"
     const val KEY_PREF_CUSTOM_DOH_URL = "pref_custom_doh_url"
     const val KEY_PREF_ENABLE_CHAIN_RELAY = "pref_enable_chain_relay"
