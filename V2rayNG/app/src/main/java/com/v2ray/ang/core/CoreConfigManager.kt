@@ -569,10 +569,11 @@ object CoreConfigManager {
                     0, V2rayConfig.RoutingBean.RulesBean(
                         inboundTag = arrayListOf("tun"),
                         outboundTag = "dns-out",
-                        port = "53"
+                        port = "53",
                     )
                 )
             }
+        }
 
         if (v2rayConfig.outbounds.none { e -> e.protocol == "dns" && e.tag == "dns-out" }) {
             v2rayConfig.outbounds.add(
@@ -586,6 +587,8 @@ object CoreConfigManager {
             )
         }
     }
+
+    
 
     private fun configureRootModeDns(v2rayConfig: V2rayConfig) {
         if (!SettingsManager.isRootMode()) return
@@ -1014,4 +1017,4 @@ object CoreConfigManager {
 
     //endregion
 }
-}
+
