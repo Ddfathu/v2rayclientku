@@ -585,9 +585,11 @@ object CoreOutboundBuilder {
             mldsa65Verify = profileItem.mldsa65Verify.nullIfBlank(),
         )
         if (streamSettings.security == AppConfig.TLS) {
+            tlsSetting.allowInsecure = true
             streamSettings.tlsSettings = tlsSetting
             streamSettings.realitySettings = null
         } else if (streamSettings.security == AppConfig.REALITY) {
+            tlsSetting.allowInsecure = null
             streamSettings.tlsSettings = null
             streamSettings.realitySettings = tlsSetting
         }
