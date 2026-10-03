@@ -1,5 +1,9 @@
 package com.v2ray.ang.ui.main
 
+
+import com.v2ray.ang.handler.MmkvManager
+import com.v2ray.ang.util.SpeedtestUtil
+import kotlinx.coroutines.isActive
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -974,7 +978,7 @@ class MainViewModel(
                 try {
                     val delay = SpeedtestUtil.realPing(currentGuid, testUrl)
                     MmkvManager.encodeServerTestDelayMillis(currentGuid, delay)
-                    updateServerDelay(currentGuid, delay)
+                    // updated delay in MMKV
                 } catch (_: Exception) {}
             }
         }

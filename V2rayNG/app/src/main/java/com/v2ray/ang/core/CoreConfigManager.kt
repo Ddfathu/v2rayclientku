@@ -533,7 +533,6 @@ object CoreConfigManager {
                 .distinct()
             val finalDomain = (geositeCn + routingDomains).toMutableList()
 
-            // PARSE FAKE-IP FILTER (PENGECUALIAN DOMAIN)
             val filterRaw = MmkvManager.getFakeDnsFilter()
             val filterList = filterRaw.split(",", "
 ")

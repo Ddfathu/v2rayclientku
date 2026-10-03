@@ -1,10 +1,8 @@
-import com.v2ray.ang.handler.MmkvManager
-import android.widget.Toast
 package com.v2ray.ang.ui.main
 
 import android.app.Activity
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -16,6 +14,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ContentPaste
+import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -35,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -43,12 +45,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import com.v2ray.ang.R
+import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.ui.compose.verticalScrollbar
 
-private val TopBarBgDark  = Color(0xFF160B24) // Ungu gelap pekat
-private val ContentWhite  = Color(0xFFFFFFFF) // Putih terang
-private val MenuPillColor = Color(0xFF2C1647) // Warna card tombol menu
-private val MenuBorder    = Color(0xFF4A2574) // Garis luar tombol menu
+private val TopBarBgDark  = Color(0xFF160B24)
+private val ContentWhite  = Color(0xFFFFFFFF)
+private val MenuPillColor = Color(0xFF2C1647)
+private val MenuBorder    = Color(0xFF4A2574)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,7 +66,6 @@ fun MainTopBar(
     onAction: (MainAction) -> Unit,
     onMoreMenuAction: (MainMoreMenuAction) -> Unit
 ) {
-    // Memaksa status bar sistem (jam, sinyal, baterai) menjadi PUTIH TERANG
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
@@ -76,18 +78,15 @@ fun MainTopBar(
         }
     }
 
-        var isAutoPingOn by remember { mutableStateOf(MmkvManager.isAutoPingEnabled()) }
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
+    var isAutoPingOn by remember { mutableStateOf(MmkvManager.isAutoPingEnabled()) }
     var showMenu by remember { mutableStateOf(false) }
     val moreMenuScrollState = rememberScrollState()
     val maxMenuHeight = (LocalConfiguration.current.screenHeightDp.dp * 0.7f)
 
     TopAppBar(
-        title = {
-            // Judul kosong / clean
-        },
+        title = { },
         navigationIcon = {
-            // Tombol MENU gaya KARTU / CHIP PILIH
             Surface(
                 modifier = Modifier
                     .padding(start = 12.dp)
@@ -125,30 +124,28 @@ fun MainTopBar(
             actionIconContentColor = ContentWhite
         ),
         actions = {
-                                    // Tombol Quick Toggle Auto-Ping
             IconButton(onClick = {
+                val newState = !isAutoPingOn
                 isAutoPingOn = newState
                 MmkvManager.encodeSettings(MmkvManager.KEY_PREF_AUTO_PING_ENABLED, newState)
                 val msg = if (newState) "Auto-Ping Aktif (" + MmkvManager.getAutoPingInterval() + "s)" else "Auto-Ping Dimatikan"
                 Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
             }) {
                 Icon(
-                    painter = painterResource(if (isAutoPingOn) R.drawable.ic_speed_24dp else R.drawable.ic_network_check_24dp),
+                    imageVector = Icons.Outlined.Speed,
                     contentDescription = "Toggle Auto-Ping",
-                    tint = if (isAutoPingOn) Color(0xFF4CAF50) else ContentWhite // Hijau menyala jika ON
+                    tint = if (isAutoPingOn) Color(0xFF4CAF50) else ContentWhite
                 )
             }
 
-            // Tombol Cepat Import Clipboard
             IconButton(onClick = { onAction(MainAction.ImportClipboard) }) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_content_paste_24dp),
+                    imageVector = Icons.Outlined.ContentPaste,
                     contentDescription = "Import from clipboard",
                     tint = ContentWhite
                 )
             }
 
-            // Tombol Search
             IconButton(onClick = { onSearchToggle(true) }) {
                 Icon(
                     painter = painterResource(R.drawable.ic_search_24dp),
@@ -157,7 +154,6 @@ fun MainTopBar(
                 )
             }
 
-            // Tombol Menu Titik Tiga
             Box(modifier = Modifier.wrapContentSize(Alignment.TopEnd)) {
                 IconButton(onClick = { showMenu = true }) {
                     Icon(
