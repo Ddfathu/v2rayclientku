@@ -52,10 +52,15 @@ object MmkvManager {
     private const val KEY_WEBDAV_CONFIG = "WEBDAV_CONFIG"
 
     // KEY KHUSUS CUSTOM DOH & UDP RELAY (DEFAULT OFF)
+        const val KEY_PREF_AUTO_PING_ENABLED = "pref_auto_ping_enabled"
+    const val KEY_PREF_AUTO_PING_URL = "pref_auto_ping_url"
+    const val KEY_PREF_AUTO_PING_INTERVAL = "pref_auto_ping_interval"
     const val KEY_PREF_ENABLE_DOH = "pref_enable_custom_doh"
     const val KEY_PREF_CUSTOM_DOH_URL = "pref_custom_doh_url"
-    const val KEY_PREF_ENABLE_UDP_RELAY = "pref_enable_udp_relay"
-    const val KEY_PREF_CUSTOM_UDP_RELAY = "pref_custom_udp_relay"
+    const val KEY_PREF_ENABLE_CHAIN_RELAY = "pref_enable_chain_relay"
+    const val KEY_PREF_CHAIN_RELAY_SERVER = "pref_chain_relay_server"
+    const val KEY_PREF_CHAIN_RELAY_UUID = "pref_chain_relay_uuid"
+    const val KEY_PREF_CHAIN_RELAY_PATH = "pref_chain_relay_path"
 
     private val recoveryHandler = object : MMKVHandler {
         override fun onMMKVCRCCheckFail(mmapID: String) =
@@ -114,10 +119,6 @@ object MmkvManager {
         return "$KEY_SUB_SERVER_PREFIX${getSubscriptionId(subscriptionId)}"
     }
 
-    /**
-     * Returns every server referenced outside the target group, or null if the raw indexes
-     * cannot provide a complete view.
-     */
     private fun decodeServersReferencedByOtherGroups(subscriptionId: String): Set<String>? {
         val targetKey = serverListKey(subscriptionId)
         val keys = mainStorage.allKeys() ?: return null
@@ -137,9 +138,6 @@ object MmkvManager {
 
     //endregion
 
-    /**
-     * Initializes MMKV with best-effort recovery so a damaged store is not silently discarded.
-     */
     fun initialize(context: Context) {
         val logLevel = if (BuildConfig.DEBUG) {
             MMKVLogLevel.LevelDebug
@@ -162,57 +160,26 @@ object MmkvManager {
 
     //region Server
 
-    /**
-     * Reads the legacy server list from KEY_ANG_CONFIGS for migration.
-     * This method is for migration purposes only.
-     *
-     * @return The JSON string of legacy server list, or null if not exists.
-     */
     fun readLegacyServerList(): String? {
         return mainStorage.decodeString(KEY_ANG_CONFIGS)
     }
 
-    /**
-     * Gets the selected server GUID.
-     *
-     * @return The selected server GUID.
-     */
     fun getSelectServer(): String? {
         return mainStorage.decodeString(KEY_SELECTED_SERVER)
     }
 
-    /**
-     * Sets the selected server GUID.
-     *
-     * @param guid The server GUID.
-     */
     fun setSelectServer(guid: String) {
         withProfileIndexLock {
             mainStorage.encode(KEY_SELECTED_SERVER, guid)
         }
     }
 
-    /**
-     * Encodes the server list for a given subscription.
-     * Saves to the subscription's serverList (including default subscription for ungrouped servers).
-     *
-     * @param serverList The list of server GUIDs.
-     * @param subscriptionId The subscription ID.
-     */
     fun encodeServerList(serverList: MutableList<String>, subscriptionId: String) {
         withProfileIndexLock {
             persistServerList(serverList, subscriptionId)
         }
     }
 
-    /**
-     * Decodes the server list for a given subscription.
-     * If subscriptionId is empty, returns ungrouped servers.
-     * Otherwise, returns servers from the specified subscription's serverList.
-     *
-     * @param subscriptionId The subscription ID.
-     * @return The list of server GUIDs.
-     */
     fun decodeServerList(subscriptionId: String): MutableList<String> {
         val json = mainStorage.decodeString(serverListKey(subscriptionId))
         return if (json.isNullOrBlank()) {
@@ -222,12 +189,6 @@ object MmkvManager {
         }
     }
 
-    /**
-     * Decodes all server list (merged from all subscriptions including default subscription).
-     * Use this when you need the complete server list.
-     *
-     * @return The list of all server GUIDs.
-     */
     fun decodeAllServerList(): MutableList<String> {
         val allServers = mutableListOf<String>()
         val subsList = decodeSubsList()
@@ -243,12 +204,6 @@ object MmkvManager {
         return allServers
     }
 
-    /**
-     * Decodes the server configuration.
-     *
-     * @param guid The server GUID.
-     * @return The server configuration.
-     */
     fun decodeServerConfig(guid: String): ProfileItem? {
         if (guid.isBlank()) {
             return null
@@ -260,13 +215,6 @@ object MmkvManager {
         return JsonUtil.fromJsonSafe(json, ProfileItem::class.java)
     }
 
-    /**
-     * Encodes the server configuration.
-     *
-     * @param guid The server GUID.
-     * @param config The server configuration.
-     * @return The server GUID.
-     */
     fun encodeServerConfig(guid: String, config: ProfileItem): String {
         val key = guid.ifBlank { Utils.getUuid() }
         withProfileIndexLock {
@@ -296,9 +244,6 @@ object MmkvManager {
         return key
     }
 
-    /**
-     * Saves a profile batch before publishing its group index and removing replaced payloads.
-     */
     internal fun saveServerProfiles(
         profiles: Map<String, ProfileItem>,
         rawConfigs: Map<String, String>,
@@ -730,7 +675,15 @@ object MmkvManager {
         return decodeSettingsBool(PREF_IS_BOOTED, false)
     }
 
-    // --- HELPER UNTUK CUSTOM DOH & UDP RELAY (DEFAULT OFF) ---
+    // --- HELPER UNTUK CUSTOM DOH & UNIVERSAL PROXY CHAIN (DEFAULT OFF) ---
+    fun getFakeDnsFilter(): String {
+        return decodeSettingsString(KEY_PREF_FAKE_DNS_FILTER, "") ?: ""
+    }
+
+        fun isAutoPingEnabled(): Boolean = decodeSettingsBool(KEY_PREF_AUTO_PING_ENABLED, false)
+    fun getAutoPingUrl(): String = decodeSettingsString(KEY_PREF_AUTO_PING_URL, "http://www.google.com/generate_204") ?: "http://www.google.com/generate_204"
+    fun getAutoPingInterval(): Long = decodeSettingsString(KEY_PREF_AUTO_PING_INTERVAL, "3")?.toLongOrNull()?.coerceAtLeast(1L) ?: 3L
+
     fun isCustomDohEnabled(): Boolean {
         return decodeSettingsBool(KEY_PREF_ENABLE_DOH, false)
     }
@@ -739,12 +692,20 @@ object MmkvManager {
         return decodeSettingsString(KEY_PREF_CUSTOM_DOH_URL, "https://1.1.1.1/dns-query") ?: "https://1.1.1.1/dns-query"
     }
 
-    fun isUdpRelayEnabled(): Boolean {
-        return decodeSettingsBool(KEY_PREF_ENABLE_UDP_RELAY, false)
+    fun isChainRelayEnabled(): Boolean {
+        return decodeSettingsBool(KEY_PREF_ENABLE_CHAIN_RELAY, false)
     }
 
-    fun getCustomUdpRelay(): String {
-        return decodeSettingsString(KEY_PREF_CUSTOM_UDP_RELAY, "wsudprelay.up.railway.app:443") ?: "wsudprelay.up.railway.app:443"
+    fun getChainRelayServer(): String {
+        return decodeSettingsString(KEY_PREF_CHAIN_RELAY_SERVER, "") ?: ""
+    }
+
+    fun getChainRelayUuid(): String {
+        return decodeSettingsString(KEY_PREF_CHAIN_RELAY_UUID, "00000000-0000-0000-0000-000000000000") ?: "00000000-0000-0000-0000-000000000000"
+    }
+
+    fun getChainRelayPath(): String {
+        return decodeSettingsString(KEY_PREF_CHAIN_RELAY_PATH, "/udprelay") ?: "/udprelay"
     }
 
     //endregion

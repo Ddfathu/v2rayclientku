@@ -1,3 +1,5 @@
+import com.v2ray.ang.handler.MmkvManager
+import android.widget.Toast
 package com.v2ray.ang.ui.main
 
 import android.app.Activity
@@ -74,6 +76,8 @@ fun MainTopBar(
         }
     }
 
+        var isAutoPingOn by remember { mutableStateOf(MmkvManager.isAutoPingEnabled()) }
+    val context = androidx.compose.ui.platform.LocalContext.current
     var showMenu by remember { mutableStateOf(false) }
     val moreMenuScrollState = rememberScrollState()
     val maxMenuHeight = (LocalConfiguration.current.screenHeightDp.dp * 0.7f)
@@ -121,6 +125,29 @@ fun MainTopBar(
             actionIconContentColor = ContentWhite
         ),
         actions = {
+                                    // Tombol Quick Toggle Auto-Ping
+            IconButton(onClick = {
+                isAutoPingOn = newState
+                MmkvManager.encodeSettings(MmkvManager.KEY_PREF_AUTO_PING_ENABLED, newState)
+                val msg = if (newState) "Auto-Ping Aktif (" + MmkvManager.getAutoPingInterval() + "s)" else "Auto-Ping Dimatikan"
+                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+            }) {
+                Icon(
+                    painter = painterResource(if (isAutoPingOn) R.drawable.ic_speed_24dp else R.drawable.ic_network_check_24dp),
+                    contentDescription = "Toggle Auto-Ping",
+                    tint = if (isAutoPingOn) Color(0xFF4CAF50) else ContentWhite // Hijau menyala jika ON
+                )
+            }
+
+            // Tombol Cepat Import Clipboard
+            IconButton(onClick = { onAction(MainAction.ImportClipboard) }) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_content_paste_24dp),
+                    contentDescription = "Import from clipboard",
+                    tint = ContentWhite
+                )
+            }
+
             // Tombol Search
             IconButton(onClick = { onSearchToggle(true) }) {
                 Icon(

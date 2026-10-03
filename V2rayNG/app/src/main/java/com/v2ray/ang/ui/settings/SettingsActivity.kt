@@ -132,6 +132,7 @@ fun SettingsScreen(
 
     var localDns by rememberMmkvBool(AppConfig.PREF_LOCAL_DNS_ENABLED, false)
     var fakeDns by rememberMmkvBool(AppConfig.PREF_FAKE_DNS_ENABLED, false)
+    var fakeDnsFilter by rememberMmkvString(MmkvManager.KEY_PREF_FAKE_DNS_FILTER, "+.facebook.com, +.fbcdn.net, +.instagram.com, +.whatsapp.com, +.whatsapp.net")
     var appendHttpProxy by rememberMmkvBool(AppConfig.PREF_APPEND_HTTP_PROXY, false)
     var vpnDns by rememberMmkvString(AppConfig.PREF_VPN_DNS, "")
     var vpnBypassLan by rememberMmkvString(AppConfig.PREF_VPN_BYPASS_LAN, AppConfig.DEFAULT_VPN_BYPASS_LAN)
@@ -197,11 +198,16 @@ fun SettingsScreen(
     var realPingConcurrency by rememberMmkvString(AppConfig.PREF_REAL_PING_CONCURRENCY, "16")
     var ipApiUrl by rememberMmkvString(AppConfig.PREF_IP_API_URL, "")
 
-    // State Pengaturan Custom DoH & UDP Relay (Default OFF/Mati)
+    // State Pengaturan Custom DoH & Universal Chain (Default OFF)
+        var autoPingEnabled by rememberMmkvBool(MmkvManager.KEY_PREF_AUTO_PING_ENABLED, false)
+    var autoPingUrl by rememberMmkvString(MmkvManager.KEY_PREF_AUTO_PING_URL, "http://www.google.com/generate_204")
+    var autoPingInterval by rememberMmkvString(MmkvManager.KEY_PREF_AUTO_PING_INTERVAL, "3")
     var enableDoh by rememberMmkvBool(MmkvManager.KEY_PREF_ENABLE_DOH, false)
     var customDohUrl by rememberMmkvString(MmkvManager.KEY_PREF_CUSTOM_DOH_URL, "https://1.1.1.1/dns-query")
-    var enableUdpRelay by rememberMmkvBool(MmkvManager.KEY_PREF_ENABLE_UDP_RELAY, false)
-    var customUdpRelay by rememberMmkvString(MmkvManager.KEY_PREF_CUSTOM_UDP_RELAY, "wsudprelay.up.railway.app:443")
+    var enableChainRelay by rememberMmkvBool(MmkvManager.KEY_PREF_ENABLE_CHAIN_RELAY, false)
+    var chainRelayServer by rememberMmkvString(MmkvManager.KEY_PREF_CHAIN_RELAY_SERVER, "")
+    var chainRelayUuid by rememberMmkvString(MmkvManager.KEY_PREF_CHAIN_RELAY_UUID, "00000000-0000-0000-0000-000000000000")
+    var chainRelayPath by rememberMmkvString(MmkvManager.KEY_PREF_CHAIN_RELAY_PATH, "/udprelay")
 
     val isVpn = mode == VPN
     val hevTunEnabled = isVpn && useHevTun
@@ -275,10 +281,9 @@ fun SettingsScreen(
             when (currentPage) {
                 SettingsSubPage.MAIN_MENU -> {
                     Column(modifier = Modifier.padding(14.dp)) {
-                        // KARTU DNS & UDP RELAY SETTINGS
                         SettingsCategoryCard(
                             title = "DNS & UDP Relay Settings",
-                            subtitle = "Pengaturan Custom DoH DNS dan Target UDP Relay",
+                            subtitle = "Pengaturan Custom DoH DNS dan Universal UDP Chain",
                             onClick = { currentPage = SettingsSubPage.CLOUDFLARE_PAGE }
                         )
                         Spacer(modifier = Modifier.height(10.dp))
@@ -309,7 +314,30 @@ fun SettingsScreen(
                 }
 
                 SettingsSubPage.CLOUDFLARE_PAGE -> {
-                    // PENGATURAN 1: CUSTOM DOH DNS (DEFAULT MATI)
+                    // FITUR AUTO PING REALTIME
+                    SettingsSwitchItem(
+                        title = "Aktifkan Auto-Ping Realtime",
+                        summary = "Looping ping realtime ke URL target saat VPN terhubung ala HTTP Custom / Dark Tunnel.",
+                        checked = autoPingEnabled,
+                        onCheckedChange = { autoPingEnabled = it }
+                    )
+                    SettingsEditItem(
+                        title = "URL Target Auto-Ping",
+                        value = autoPingUrl,
+                        enabled = autoPingEnabled,
+                        onValueChanged = { autoPingUrl = it }
+                    )
+                    SettingsEditItem(
+                        title = "Interval Auto-Ping (Detik)",
+                        value = autoPingInterval,
+                        enabled = autoPingEnabled,
+                        keyboardNumber = true,
+                        onValueChanged = { autoPingInterval = it }
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // FITUR 1: CUSTOM DOH DNS (DEFAULT MATI)
                     SettingsSwitchItem(
                         title = "Aktifkan Custom DoH DNS",
                         summary = "Arahkan resolusi nama domain melalui endpoint DNS over HTTPS.",
@@ -323,20 +351,32 @@ fun SettingsScreen(
                         onValueChanged = { customDohUrl = it }
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                    // PENGATURAN 2: CUSTOM UDP RELAY TARGET (DEFAULT MATI)
+                    // FITUR 2: UNIVERSAL TUNNEL CHAIN (DEFAULT MATI)
                     SettingsSwitchItem(
-                        title = "Aktifkan Custom UDP Relay",
-                        summary = "Sisipkan host server relay cadangan ke parameter koneksi.",
-                        checked = enableUdpRelay,
-                        onCheckedChange = { enableUdpRelay = it }
+                        title = "Aktifkan Universal UDP Chain",
+                        summary = "Bungkus koneksi via Worker ke server Railway. Berfungsi di skrip Worker apa pun tanpa perlu edit script worker.",
+                        checked = enableChainRelay,
+                        onCheckedChange = { enableChainRelay = it }
                     )
                     SettingsEditItem(
-                        title = "Host / Port UDP Relay Target",
-                        value = customUdpRelay,
-                        enabled = enableUdpRelay,
-                        onValueChanged = { customUdpRelay = it }
+                        title = "Railway Server Host",
+                        value = chainRelayServer,
+                        enabled = enableChainRelay,
+                        onValueChanged = { chainRelayServer = it }
+                    )
+                    SettingsEditItem(
+                        title = "Railway Server UUID",
+                        value = chainRelayUuid,
+                        enabled = enableChainRelay,
+                        onValueChanged = { chainRelayUuid = it }
+                    )
+                    SettingsEditItem(
+                        title = "Railway WS Path",
+                        value = chainRelayPath,
+                        enabled = enableChainRelay,
+                        onValueChanged = { chainRelayPath = it }
                     )
                 }
 
@@ -429,6 +469,12 @@ fun SettingsScreen(
                         checked = fakeDns,
                         enabled = isVpn && localDns,
                         onCheckedChange = { fakeDns = it }
+                    )
+                    SettingsEditItem(
+                        title = "Fake-IP Filter (Pengecualian)",
+                        value = fakeDnsFilter,
+                        enabled = isVpn && localDns && fakeDns,
+                        onValueChanged = { fakeDnsFilter = it }
                     )
                     SettingsEditItem(
                         title = stringResource(R.string.title_pref_vpn_dns),

@@ -958,4 +958,26 @@ class MainViewModel(
     private companion object {
         const val TEST_RESULT_FLUSH_INTERVAL_MS = 500L
     }
+
+    private var autoPingJob: kotlinx.coroutines.Job? = null
+
+    private fun checkAndManageAutoPing(isRunning: Boolean) {
+        autoPingJob?.cancel()
+        autoPingJob = null
+
+        autoPingJob = viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            val interval = MmkvManager.getAutoPingInterval() * 1000L
+            val testUrl = MmkvManager.getAutoPingUrl()
+            while (kotlinx.coroutines.isActive) {
+                kotlinx.coroutines.delay(interval)
+                val currentGuid = MmkvManager.getSelectServer() ?: continue
+                try {
+                    val delay = SpeedtestUtil.realPing(currentGuid, testUrl)
+                    MmkvManager.encodeServerTestDelayMillis(currentGuid, delay)
+                    updateServerDelay(currentGuid, delay)
+                } catch (_: Exception) {}
+            }
+        }
+    }
+
 }
