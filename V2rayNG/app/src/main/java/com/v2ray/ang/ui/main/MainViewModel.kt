@@ -1,7 +1,5 @@
 package com.v2ray.ang.ui.main
 
-data class PingLogItem(val time: String, val delay: Long, val msg: String)
-
 import kotlinx.coroutines.isActive
 
 
@@ -71,6 +69,8 @@ private fun applyTestDelayResultsToRows(
         row.copy(testDelayMillis = delayMillis)
     }
 }
+
+data class PingLogItem(val time: String, val delay: Long, val msg: String)
 
 class MainViewModel(
     application: Application,
