@@ -1,5 +1,7 @@
 package com.v2ray.ang.ui.main
 
+import kotlinx.coroutines.isActive
+
 
 import com.v2ray.ang.handler.MmkvManager
 import android.app.Application
@@ -970,11 +972,11 @@ class MainViewModel(
 
         autoPingJob = viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             val interval = 3000L
-            while (kotlinx.coroutines.isActive) {
+            while (isActive) {
                 kotlinx.coroutines.delay(interval)
                 try {
                     testCurrentServerRealPing()
-                } catch (_: Exception) {}
+                } catch (e: Exception) {}
             }
         }
     }
