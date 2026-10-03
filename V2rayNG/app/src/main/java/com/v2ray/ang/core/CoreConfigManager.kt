@@ -532,14 +532,6 @@ object CoreConfigManager {
                 .distinct()
             val finalDomain = (geositeCn + routingDomains).toMutableList()
 
-                v2rayConfig.dns?.servers?.add(
-                    0,
-                    V2rayConfig.DnsBean.ServersBean(
-                        address = remoteDns,
-                        domains = ArrayList(filterList.map { "domain:" })
-                    )
-                )
-            }
 
                         val filterRaw = MmkvManager.decodeSettingsString(MmkvManager.KEY_PREF_FAKE_DNS_FILTER, "") ?: ""
             val filterList = filterRaw.split(",").map { it.trim().removePrefix("+.") }.filter { it.isNotEmpty() }
@@ -1021,4 +1013,5 @@ object CoreConfigManager {
     )
 
     //endregion
+}
 }

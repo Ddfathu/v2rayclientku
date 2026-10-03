@@ -121,31 +121,31 @@ fun MainTopBar(
             actionIconContentColor = ContentWhite
         ),
         actions = {
-            // 1. Quick Toggle Auto-Ping
-            IconButton(onClick = {
-                val newState = !isAutoPingOn
-                isAutoPingOn = newState
-                MmkvManager.encodeSettings(MmkvManager.KEY_PREF_AUTO_PING_ENABLED, newState)
-                val msg = if (newState) "Auto-Ping Aktif" else "Auto-Ping Dimatikan"
-                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-            }) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_notifications_none_24dp),
-                    contentDescription = "Toggle Auto-Ping",
-                    tint = if (isAutoPingOn) Color(0xFF4CAF50) else ContentWhite
+            // 1. Text Badge Toggle Auto-Ping (Aman 100% tanpa drawable eksternal)
+            Surface(
+                modifier = Modifier
+                    .padding(end = 4.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable {
+                        val newState = !isAutoPingOn
+                        isAutoPingOn = newState
+                        MmkvManager.encodeSettings(MmkvManager.KEY_PREF_AUTO_PING_ENABLED, newState)
+                        val msg = if (newState) "Auto-Ping Aktif" else "Auto-Ping Mati"
+                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    },
+                color = if (isAutoPingOn) Color(0xFF2E7D32) else Color(0xFF332047),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = if (isAutoPingOn) "PING ON" else "PING OFF",
+                    color = ContentWhite,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 10.sp,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                 )
             }
 
-            // 2. Tombol Import Clipboard Cepat
-            IconButton(onClick = { onAction(MainAction.ImportClipboard) }) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_file_download_24dp),
-                    contentDescription = "Import Clipboard",
-                    tint = ContentWhite
-                )
-            }
-
-            // 3. Tombol Search
+            // 2. Tombol Search
             IconButton(onClick = { onSearchToggle(true) }) {
                 Icon(
                     painter = painterResource(R.drawable.ic_search_24dp),
@@ -154,7 +154,7 @@ fun MainTopBar(
                 )
             }
 
-            // 4. Dropdown Menu
+            // 3. Dropdown Menu
             Box(modifier = Modifier.wrapContentSize(Alignment.TopEnd)) {
                 IconButton(onClick = { showMenu = true }) {
                     Icon(

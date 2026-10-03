@@ -963,7 +963,6 @@ class MainViewModel(
 
     private var autoPingJob: kotlinx.coroutines.Job? = null
 
-    private var autoPingJob: kotlinx.coroutines.Job? = null
 
     private fun checkAndManageAutoPing(isRunning: Boolean) {
         autoPingJob?.cancel()
